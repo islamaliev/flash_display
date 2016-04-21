@@ -1,3 +1,4 @@
 class DisplayObject {
-
-}
+public:
+    DisplayObject();
+};
