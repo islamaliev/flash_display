@@ -18,6 +18,12 @@ namespace display {
         void setHeight(float value) { m_height = value; }
         float height() { return m_height; }
 
+        void setScaleX(float value) { m_scaleX = value; }
+        float scaleX() { return m_scaleX; }
+
+        void setScaleY(float value) { m_scaleY = value; }
+        float scaleY() { return m_scaleY; }
+
         void setVisible(bool value) { m_visible = value; }
         bool visible() { return m_visible; }
 
@@ -26,6 +32,8 @@ namespace display {
         float m_y{0};
         float m_width{1};
         float m_height{1};
+        float m_scaleX{1};
+        float m_scaleY{1};
         bool m_visible{true};
     };
 
