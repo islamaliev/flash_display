@@ -1,9 +1,13 @@
+#include "Rectangle.h"
+
 namespace flash {
 
 namespace display {
 
     class DisplayObject {
     public:
+        using Rectangle = flash::core::Rectangle;
+
         DisplayObject();
 
         void setX(float value) { m_x = value; }
@@ -35,6 +39,10 @@ namespace display {
 
         void setRotation(float value) { m_rotation = value; }
         float rotation() { return m_rotation; }
+
+        Rectangle getBounds(DisplayObject* targetSpace) const {
+            return Rectangle(0, 0, m_width, m_height);
+        }
 
     private:
         float m_x{0};
