@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ostream>
+
 
 namespace flash {
 
@@ -8,31 +10,34 @@ namespace core {
     class Rectangle {
     public:
         Rectangle(float x, float y, float w, float h)
-            : m_x(x)
-            , m_y(y)
-            , m_width(w)
-            , m_height(h)
+            : x(x)
+            , y(y)
+            , width(w)
+            , height(h)
         {}
 
         Rectangle() = default;
 
-        void setX(float value) { m_x = value; }
-        float x() { return m_x; }
+        bool equals(const Rectangle& otherRect) const {
+            return *this == otherRect;
+        }
 
-        void setY(float value) { m_y = value; }
-        float y() { return m_y; }
+        bool operator==(const Rectangle& otherRect) const {
+            return !(x != otherRect.x || y != otherRect.y || width != otherRect.width || height != otherRect.height);
+        }
 
-        void setWidth(float value) { m_width = value; }
-        float width() { return m_width; }
+        bool operator!=(const Rectangle& otherRect) const {
+            return !(*this == otherRect);
+        }
 
-        void setHeight(float value) { m_height = value; }
-        float height() { return m_height; }
+        friend std::ostream& operator<<(std::ostream& os, const Rectangle& rect) {
+            return os << "(x = " << rect.x << ", y = " << rect.y << ", width = " << rect.width << ", height = " << rect.height << ") ";
+        }
 
-    private:
-        float m_x{0};
-        float m_y{0};
-        float m_width{1};
-        float m_height{1};
+        float x{0};
+        float y{0};
+        float width{1};
+        float height{1};
     };
 
 }
