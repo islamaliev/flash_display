@@ -9,6 +9,10 @@ set(TARGET_NAME fdisplay)
 set(${PROJECT_NAME}_TARGET_NAME ${TARGET_NAME}
         CACHE INTERNAL "${PROJECT_NAME}: Lib Binary Name" FORCE)
 
+set(DEPENDENCIES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies)
+include(glfw)
+
 file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 add_library(${TARGET_NAME} ${SOURCES})
 set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+link_glfw(${TARGET_NAME})
