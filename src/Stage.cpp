@@ -1,98 +1,15 @@
 #include "../include/Stage.h"
 #include "GL/glew.h"
 #include <GLFW/glfw3.h>
+#include "../include/Program.h"
 #include <cmath>
 
 using Stage = flash::display::Stage;
+using Program = flash::render::Program;
 
 namespace {
-    GLuint vertShader;
-    GLuint fragShader;
-    GLuint program;
     GLuint vao;
-
-    GLint Result;
-    int InfoLogLength;
-
-    void _cleanUp() {
-        glDeleteShader(vertShader);
-        glDeleteShader(fragShader);
-    }
-
-    void _checkProgram(GLuint ProgramID) {
-        glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
-        glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-        if ( InfoLogLength > 0 ){
-            char ProgramErrorMessage[InfoLogLength+1];
-            glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
-            printf("%s\n", &ProgramErrorMessage[0]);
-        }
-    }
-
-    void _linkProgram(GLuint ProgramID) {
-        glAttachShader(ProgramID, vertShader);
-        glAttachShader(ProgramID, fragShader);
-        glLinkProgram(ProgramID);
-    }
-
-    void _checkShader(GLuint shaderID) {
-        glGetShaderiv(shaderID, GL_COMPILE_STATUS, &Result);
-        glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-        if (InfoLogLength > 0 ){
-            char VertexShaderErrorMessage[InfoLogLength+1];
-            glGetShaderInfoLog(shaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
-            printf("%s\n", &VertexShaderErrorMessage[0]);
-        }
-    }
-
-    void _compileShader(const std::string& shaderCode, const GLuint& shaderID) {
-        char const *sourcePointer = shaderCode.c_str();
-        glShaderSource(shaderID, 1, &sourcePointer, NULL);
-        glCompileShader(shaderID);
-    }
-
-    void _getShader(GLuint shaderID, const std::string shaderCode) {
-        _compileShader(shaderCode, shaderID);
-        _checkShader(shaderID);
-    }
-
-    GLuint _getProgram() {
-        Result = GL_FALSE;
-
-        const std::string& vertShaderCode = R"shaderCode(
-        #version 330 core
-
-        in vec3 vp;
-
-        void main(){
-            const vec4 vertices[3] = vec4[3](vec4(0.25, -0.25, 0.5, 1.0),
-                                             vec4(-0.25, -0.25, 0.5, 1.0),
-                                             vec4(0.25, 0.25, 0.5, 1.0));
-            gl_Position = vertices[gl_VertexID];
-        })shaderCode";
-
-        const std::string& fragShaderCode = R"shaderCode(
-        #version 330 core
-
-        out vec3 color;
-
-        void main()
-        {
-            color = vec3(1,0,0);
-        })shaderCode";
-
-        vertShader = glCreateShader(GL_VERTEX_SHADER);
-        fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-
-        _getShader(vertShader, vertShaderCode);
-        _getShader(fragShader, fragShaderCode);
-
-        GLuint ProgramID = glCreateProgram();
-        _linkProgram(ProgramID);
-        _checkProgram(ProgramID);
-        _cleanUp();
-        return ProgramID;
-    }
+    Program program;
 
     void update(double time) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -101,13 +18,13 @@ namespace {
         const GLfloat color[] = {0.1, 0.1, 0.1, 1};
         glClearBufferfv(GL_COLOR, 0, color);
 
-        glUseProgram(program);
+        program.activate(nullptr);
         glDrawArrays(GL_TRIANGLES, 0, 3);
     }
 
     void dispose() {
         glDeleteVertexArrays(1, &vao);
-        glDeleteProgram(program);
+        program.dispose();
     }
 
     int init() {
@@ -144,7 +61,7 @@ namespace {
         glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
 
-        program = _getProgram();
+        program.init();
 
         // LOOP
         while (!glfwWindowShouldClose(window)) {
