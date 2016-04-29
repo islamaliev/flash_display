@@ -4,8 +4,6 @@
 #include "../include/Contex.h"
 #include <string>
 
-using Program = flash::render::Program;
-
 namespace {
     GLuint vertShader;
     GLuint fragShader;
@@ -57,6 +55,9 @@ namespace {
     }
 
 }
+
+using namespace flash;
+using namespace render;
 
 Program::Program() {
 
