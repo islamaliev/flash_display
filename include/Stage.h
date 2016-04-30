@@ -14,6 +14,8 @@ namespace display {
         }
 
         void start();
+
+        void draw(flash::render::Context& context) override;
     };
 
 }

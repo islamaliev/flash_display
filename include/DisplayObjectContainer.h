@@ -55,6 +55,8 @@ namespace display {
             return std::find(m_children.cbegin(), m_children.cend(), child) != m_children.cend();
         }
 
+        void draw(flash::render::Context& context) override;
+
     private:
         std::vector<DisplayObject*> m_children;
     };

@@ -9,6 +9,10 @@ using Context = flash::render::Context;
 void Stage::start() {
     Context context;
     context.init((unsigned) width(), (unsigned) height());
-    context.start();
+    context.start(*this);
     context.dispose();
+}
+
+void Stage::draw(Context& context) {
+    DisplayObjectContainer::draw(context);
 }

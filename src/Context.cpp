@@ -2,6 +2,7 @@
 #include "GL/glew.h"
 #include <GLFW/glfw3.h>
 #include "../include/Program.h"
+#include "../include/DisplayObject.h"
 #include <cmath>
 #include <cstdio>
 #include <ctime>
@@ -9,20 +10,9 @@
 using Program = flash::render::Program;
 
 namespace {
-    GLuint vao;
+    GLuint _vao;
     Program program;
     GLFWwindow* window;
-
-    void update(double time) {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-//         const GLfloat color[] = {(float)sin(time) * 0.5f + 0.5f, (float)cos(time) * 0.5f + 0.5f, 0.4f, 1.0f};
-        const GLfloat color[] = {0.1, 0.1, 0.1, 1};
-        glClearBufferfv(GL_COLOR, 0, color);
-
-        program.activate(nullptr);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-    }
 }
 
 using namespace flash;
@@ -59,14 +49,26 @@ void Context::init(unsigned width, unsigned height) {
     glDepthFunc(GL_LESS);
 }
 
-void Context::start() {
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+void Context::start(flash::display::DisplayObject& displayObject) {
+    glGenVertexArrays(1, &_vao);
+    glBindVertexArray(_vao);
 
     program.init();
 
     while (!glfwWindowShouldClose(window)) {
-        update((double) clock() / 10000);
+        double time = (double) clock() / 10000;
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+//         const GLfloat color[] = {(float)sin(time) * 0.5f + 0.5f, (float)cos(time) * 0.5f + 0.5f, 0.4f, 1.0f};
+        const GLfloat color[] = {0.1, 0.1, 0.1, 1};
+        glClearBufferfv(GL_COLOR, 0, color);
+
+        program.activate(nullptr);
+
+        displayObject.draw(*this);
+
+//        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glfwPollEvents();
         glfwSwapBuffers(window);
@@ -75,7 +77,7 @@ void Context::start() {
 }
 
 void Context::dispose() {
-    glDeleteVertexArrays(1, &vao);
+    glDeleteVertexArrays(1, &_vao);
     program.dispose();
     glfwTerminate();
 }

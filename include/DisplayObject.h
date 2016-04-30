@@ -2,6 +2,10 @@
 
 namespace flash {
 
+namespace render {
+    class Context;
+}
+
 namespace display {
 
     class DisplayObject {
@@ -43,6 +47,8 @@ namespace display {
         Rectangle getBounds(DisplayObject* targetSpace) const {
             return Rectangle(0, 0, m_width, m_height);
         }
+
+        virtual void draw(flash::render::Context& context);
 
     private:
         float m_x{0};
