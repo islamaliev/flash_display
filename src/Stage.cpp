@@ -1,5 +1,5 @@
-#include "../include/Stage.h"
-#include "../include/Contex.h"
+#include "Stage.h"
+#include "Contex.h"
 
 using namespace flash;
 using namespace display;

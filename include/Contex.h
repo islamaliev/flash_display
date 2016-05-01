@@ -6,6 +6,10 @@ namespace display {
     class DisplayObject;
 }
 
+namespace math {
+    class Mat4;
+}
+
 namespace render {
     class Context {
     public:
@@ -14,6 +18,8 @@ namespace render {
         void start(display::DisplayObject& displayObject);
 
         void dispose();
+
+        void setMatrix(const flash::math::Mat4& matrix);
     };
 
 }

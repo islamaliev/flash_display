@@ -1,5 +1,5 @@
-#include "../include/DisplayObjectContainer.h"
-#include "../include/Contex.h"
+#include "DisplayObjectContainer.h"
+#include "Contex.h"
 
 using namespace flash::display;
 

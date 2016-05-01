@@ -1,8 +1,9 @@
 #include <GL/glew.h>
 #include <cstdio>
-#include "../include/Program.h"
-#include "../include/Contex.h"
+#include "Program.h"
+#include "Contex.h"
 #include <string>
+#include <Mat4.h>
 
 namespace {
     GLuint vertShader;
@@ -71,12 +72,14 @@ void Program::init() {
 
         in vec3 position;
 
+        uniform mat4 matrix;
+
         void main(){
             const vec4 vertices[3] = vec4[3](vec4(0.25, -0.25, 0.5, 1.0),
                                              vec4(-0.25, -0.25, 0.5, 1.0),
                                              vec4(0.25, 0.25, 0.5, 1.0));
             //gl_Position = vertices[gl_VertexID];
-            gl_Position = vec4(position, 1.0);
+            gl_Position = matrix * vec4(position, 1.0);
         })shaderCode";
 
     const std::string& fragShaderCode = R"shaderCode(
@@ -107,4 +110,9 @@ void Program::activate(Context* context) {
 
 void Program::dispose() {
     glDeleteProgram(program);
+}
+
+void Program::setUniform(const char* name, const flash::math::Mat4& matrix) {
+    const GLint matrixLocation = glGetUniformLocation(program, name);
+    glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, matrix);
 }

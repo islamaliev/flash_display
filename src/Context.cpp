@@ -1,11 +1,9 @@
-#include "../include/Contex.h"
+#include "Contex.h"
 #include "GL/glew.h"
 #include <GLFW/glfw3.h>
-#include "../include/Program.h"
-#include "../include/DisplayObject.h"
-#include <cmath>
-#include <cstdio>
-#include <ctime>
+#include "Program.h"
+#include "DisplayObject.h"
+#include <Mat4.h>
 
 using Program = flash::render::Program;
 
@@ -80,4 +78,8 @@ void Context::dispose() {
     glDeleteVertexArrays(1, &_vao);
     program.dispose();
     glfwTerminate();
+}
+
+void Context::setMatrix(const flash::math::Mat4& matrix) {
+    program.setUniform("matrix", matrix);
 }

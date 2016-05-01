@@ -1,13 +1,14 @@
 #include <GL/glew.h>
-#include "../include/DisplayObject.h"
-#include "../include/Contex.h"
+#include "DisplayObject.h"
+#include "Contex.h"
+#include "Mat4.h"
 
 using namespace flash::display;
 using namespace flash::render;
 
 namespace {
     const unsigned FLOAT_PRO_POINT = 3;
-    const unsigned POINTS_NUM = 6;
+//    const unsigned POINTS_NUM = 6;
 
     GLuint _vao;
 
@@ -15,10 +16,10 @@ namespace {
 
     void initVAO(GLuint& vao) {
         float points[] = {
-                -0.5f,  0.5f,  0.0f,
-                0.5f, 0.5f,  0.0f,
-                0.5f, -0.5f,  0.0f,
-                -0.5f, -0.5f,  0.0f
+                -1.0f,  1.0f,  0.0f,
+                1.0f, 1.0f,  0.0f,
+                1.0f, -1.0f,  0.0f,
+                -1.0f, -1.0f,  0.0f
         };
 
         GLint indecies[] = {
@@ -54,13 +55,13 @@ void DisplayObject::draw(Context& context) {
         initVAO(_vao );
         initialized = true;
     }
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    GLenum mode;
-//	mode = GL_POINTS;
-//	mode = GL_LINE_STRIP;
-    mode = GL_TRIANGLES;
-//	mode = GL_LINES;
+    flash::math::Mat4 m;
+    float xt = (x() + width() / 2) / 400 - 1;
+    float yt = (y() + height() / 2) / 300 - 1;
+    m.translate(xt, yt, 0);
+    m.scale(width() / 800, height() / 600, 0);
+    context.setMatrix(m);
 
     glBindVertexArray(_vao);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);

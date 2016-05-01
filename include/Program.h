@@ -2,6 +2,10 @@
 
 namespace flash {
 
+namespace math {
+    class Mat4;
+}
+
 namespace render {
 
     class Context;
@@ -15,6 +19,8 @@ namespace render {
         void activate(Context* context);
 
         void dispose();
+
+        void setUniform(const char* name, const flash::math::Mat4& matrix);
     };
 
 }
