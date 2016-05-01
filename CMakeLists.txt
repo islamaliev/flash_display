@@ -14,7 +14,22 @@ set(${PROJECT_NAME}_TARGET_NAME ${TARGET_NAME}
 set(DEPENDENCIES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies)
 include(glfw)
 
+
+
+set(MATH_LIB flash_math)
+add_subdirectory(${DEPENDENCIES_DIR}/${MATH_LIB})
+set(MATH_LIB_TARGET_NAME ${${MATH_LIB}_TARGET_NAME})
+
+include_directories(
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${${MATH_LIB}_INCLUDE_DIRS})
+
+message("MATH_LIB = " ${MATH_LIB})
+message("flash_math_INCLUDE_DIRS = " ${flash_math_INCLUDE_DIRS})
+message("MATH_LIB_INCLUDE_DIRS = " ${${MATH_LIB}_INCLUDE_DIRS})
+
 file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 add_library(${TARGET_NAME} ${SOURCES})
 set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 link_glfw(${TARGET_NAME})
+target_link_libraries(${TARGET_NAME} ${MATH_LIB_TARGET_NAME})

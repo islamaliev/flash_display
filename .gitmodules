@@ -2,3 +2,6 @@
 	path = dependencies/glfw
 	url = https://github.com/glfw/glfw.git
 
+[submodule "dependencies/flash_math"]
+	path = dependencies/flash_math
+	url = https://github.com/islamaliev/flash_math.git
