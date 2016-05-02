@@ -20,6 +20,8 @@ namespace render {
         void dispose();
 
         void setMatrix(const flash::math::Mat4& matrix);
+
+        void setProjection(const flash::math::Mat4& matrix);
     };
 
 }

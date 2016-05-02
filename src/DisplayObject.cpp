@@ -6,6 +6,8 @@
 using namespace flash::display;
 using namespace flash::render;
 
+using Mat4 = flash::math::Mat4;
+
 namespace {
     const unsigned FLOAT_PRO_POINT = 3;
 //    const unsigned POINTS_NUM = 6;
@@ -16,10 +18,10 @@ namespace {
 
     void initVAO(GLuint& vao) {
         float points[] = {
-                -1.0f,  1.0f,  0.0f,
-                1.0f, 1.0f,  0.0f,
-                1.0f, -1.0f,  0.0f,
-                -1.0f, -1.0f,  0.0f
+                -0.5f,  0.5f,  0.0f,
+                0.5f, 0.5f,  0.0f,
+                0.5f, -0.5f,  0.0f,
+                -0.5f, -0.5f,  0.0f
         };
 
         GLint indecies[] = {
@@ -56,11 +58,12 @@ void DisplayObject::draw(Context& context) {
         initialized = true;
     }
 
-    flash::math::Mat4 m;
-    float xt = (x() + width() / 2) / 400 - 1;
-    float yt = (y() + height() / 2) / 300 - 1;
+    Mat4 m;
+    float xt = x() + width() / 2;
+    float yt = y() + height() / 2;
     m.translate(xt, yt, 0);
-    m.scale(width() / 800, height() / 600, 0);
+    m.scale(width(), height(), 0);
+
     context.setMatrix(m);
 
     glBindVertexArray(_vao);

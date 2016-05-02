@@ -73,13 +73,10 @@ void Program::init() {
         in vec3 position;
 
         uniform mat4 matrix;
+        uniform mat4 projection;
 
         void main(){
-            const vec4 vertices[3] = vec4[3](vec4(0.25, -0.25, 0.5, 1.0),
-                                             vec4(-0.25, -0.25, 0.5, 1.0),
-                                             vec4(0.25, 0.25, 0.5, 1.0));
-            //gl_Position = vertices[gl_VertexID];
-            gl_Position = matrix * vec4(position, 1.0);
+            gl_Position = projection * matrix * vec4(position, 1.0);
         })shaderCode";
 
     const std::string& fragShaderCode = R"shaderCode(

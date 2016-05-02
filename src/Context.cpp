@@ -45,16 +45,17 @@ void Context::init(unsigned width, unsigned height) {
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
+
+    program.init();
+    program.activate(nullptr);
 }
 
 void Context::start(flash::display::DisplayObject& displayObject) {
     glGenVertexArrays(1, &_vao);
     glBindVertexArray(_vao);
 
-    program.init();
-
     while (!glfwWindowShouldClose(window)) {
-        double time = (double) clock() / 10000;
+//        double time = (double) clock() / 10000;
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -62,7 +63,7 @@ void Context::start(flash::display::DisplayObject& displayObject) {
         const GLfloat color[] = {0.1, 0.1, 0.1, 1};
         glClearBufferfv(GL_COLOR, 0, color);
 
-        program.activate(nullptr);
+
 
         displayObject.draw(*this);
 
@@ -82,4 +83,8 @@ void Context::dispose() {
 
 void Context::setMatrix(const flash::math::Mat4& matrix) {
     program.setUniform("matrix", matrix);
+}
+
+void Context::setProjection(const flash::math::Mat4& matrix) {
+    program.setUniform("projection", matrix);
 }
