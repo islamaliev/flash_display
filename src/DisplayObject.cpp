@@ -67,3 +67,10 @@ Mat4 DisplayObject::getTransform() const {
     m.scale(width(), height(), 0);
     return m;
 }
+
+Mat4 DisplayObject::getTransform(DisplayObjectContainer* targetSpace) const {
+    if (targetSpace == getParent()) {
+        return getTransform();
+    }
+    return Mat4::IDENTITY;
+}

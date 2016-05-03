@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Rectangle.h"
 #include "Mat4.h"
 
@@ -8,6 +10,8 @@ namespace render {
 }
 
 namespace display {
+
+    class DisplayObjectContainer;
 
     class DisplayObject {
     public:
@@ -45,7 +49,7 @@ namespace display {
         void setRotation(float value) { m_rotation = value; }
         float rotation() const { return m_rotation; }
 
-        Rectangle getBounds(DisplayObject* targetSpace) const {
+        virtual Rectangle getBounds(DisplayObject* targetSpace) const {
             return Rectangle(0, 0, m_width, m_height);
         }
 
@@ -53,7 +57,19 @@ namespace display {
 
         flash::math::Mat4 getTransform() const;
 
+        flash::math::Mat4 getTransform(DisplayObjectContainer* targetSpace) const;
+
+        const DisplayObjectContainer* getParent() const {
+            return m_parent;
+        }
+
+        DisplayObjectContainer* getParent() {
+            return m_parent;
+        }
+
     private:
+        void setParent(DisplayObjectContainer* parent) { m_parent = parent; }
+
         float m_x{0};
         float m_y{0};
         float m_width{1};
@@ -64,6 +80,9 @@ namespace display {
         float m_pivotY{0};
         float m_rotation{0};
         bool m_visible{true};
+        DisplayObjectContainer* m_parent{nullptr};
+
+        friend class DisplayObjectContainer;
     };
 
 }
