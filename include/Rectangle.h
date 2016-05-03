@@ -1,8 +1,5 @@
 #pragma once
 
-#include <ostream>
-
-
 namespace flash {
 
 namespace core {
@@ -28,10 +25,6 @@ namespace core {
 
         bool operator!=(const Rectangle& otherRect) const {
             return !(*this == otherRect);
-        }
-
-        friend std::ostream& operator<<(std::ostream& os, const Rectangle& rect) {
-            return os << "(x = " << rect.x << ", y = " << rect.y << ", width = " << rect.width << ", height = " << rect.height << ") ";
         }
 
         float x{0};

@@ -1,7 +1,6 @@
 #include <GL/glew.h>
 #include "DisplayObject.h"
 #include "Contex.h"
-#include "Mat4.h"
 
 using namespace flash::display;
 using namespace flash::render;
@@ -48,24 +47,23 @@ namespace {
     }
 }
 
-DisplayObject::DisplayObject() {
-
-}
-
 void DisplayObject::draw(Context& context) {
     if (!initialized) {
         initVAO(_vao );
         initialized = true;
     }
 
+    context.setMatrix(getTransform());
+
+    glBindVertexArray(_vao);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+}
+
+Mat4 DisplayObject::getTransform() const {
     Mat4 m;
     float xt = x() + width() / 2;
     float yt = y() + height() / 2;
     m.translate(xt, yt, 0);
     m.scale(width(), height(), 0);
-
-    context.setMatrix(m);
-
-    glBindVertexArray(_vao);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    return m;
 }

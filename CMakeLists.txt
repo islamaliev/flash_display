@@ -20,13 +20,12 @@ set(MATH_LIB flash_math)
 add_subdirectory(${DEPENDENCIES_DIR}/${MATH_LIB})
 set(MATH_LIB_TARGET_NAME ${${MATH_LIB}_TARGET_NAME})
 
-include_directories(
+set(${PROJECT_NAME}_INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${${MATH_LIB}_INCLUDE_DIRS})
+        ${${MATH_LIB}_INCLUDE_DIRS}
+        CACHE INTERNAL "${PROJECT_NAME}: Include Directories" FORCE)
 
-message("MATH_LIB = " ${MATH_LIB})
-message("flash_math_INCLUDE_DIRS = " ${flash_math_INCLUDE_DIRS})
-message("MATH_LIB_INCLUDE_DIRS = " ${${MATH_LIB}_INCLUDE_DIRS})
+include_directories(${${PROJECT_NAME}_INCLUDE_DIRS})
 
 file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 add_library(${TARGET_NAME} ${SOURCES})
