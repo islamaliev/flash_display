@@ -55,11 +55,10 @@ void Context::start(flash::display::DisplayObject& displayObject) {
     glBindVertexArray(_vao);
 
     while (!glfwWindowShouldClose(window)) {
-//        double time = (double) clock() / 10000;
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-//         const GLfloat color[] = {(float)sin(time) * 0.5f + 0.5f, (float)cos(time) * 0.5f + 0.5f, 0.4f, 1.0f};
+//        double time = (double) clock() / 10000;
+//        const GLfloat color[] = {(float)sin(time) * 0.5f + 0.5f, (float)cos(time) * 0.5f + 0.5f, 0.4f, 1.0f};
         const GLfloat color[] = {0.1, 0.1, 0.1, 1};
         glClearBufferfv(GL_COLOR, 0, color);
 

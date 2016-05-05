@@ -1,5 +1,6 @@
 #include <GL/glew.h>
 #include "DisplayObject.h"
+#include "DisplayObjectContainer.h"
 #include "Contex.h"
 
 using namespace flash::display;
@@ -17,10 +18,10 @@ namespace {
 
     void initVAO(GLuint& vao) {
         float points[] = {
-                -0.5f,  0.5f,  0.0f,
-                0.5f, 0.5f,  0.0f,
-                0.5f, -0.5f,  0.0f,
-                -0.5f, -0.5f,  0.0f
+                0.0f,  1.0f,  0.0f,
+                1.0f, 1.0f,  0.0f,
+                1.0f, 0.0f,  0.0f,
+                0.0f, 0.0f,  0.0f
         };
 
         GLint indecies[] = {
@@ -61,16 +62,27 @@ void DisplayObject::draw(Context& context) {
 
 Mat4 DisplayObject::getTransform() const {
     Mat4 m;
-    float xt = x() + width() / 2;
-    float yt = y() + height() / 2;
+    float xt = x();
+    float yt = y();
     m.translate(xt, yt, 0);
-    m.scale(width(), height(), 0);
+    m.scale(scaleX(), scaleY(), 0);
     return m;
 }
 
 Mat4 DisplayObject::getTransform(DisplayObjectContainer* targetSpace) const {
-    if (targetSpace == getParent()) {
+    const DisplayObjectContainer* currentParent = getParent();
+    if (!currentParent) {
+        return Mat4::IDENTITY;
+    }
+    if (targetSpace == currentParent) {
         return getTransform();
     }
-    return Mat4::IDENTITY;
+    Mat4 m = getTransform();
+
+    while (currentParent && currentParent != targetSpace) {
+        const Mat4& mat4 = currentParent->getTransform();
+        m.multiplyByMatrix(mat4);
+        currentParent = currentParent->getParent();
+    }
+    return m;
 }
