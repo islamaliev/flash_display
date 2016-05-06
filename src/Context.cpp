@@ -4,6 +4,7 @@
 #include "Program.h"
 #include "DisplayObject.h"
 #include <iostream>
+#include <RenderState.h>
 
 using Program = flash::render::Program;
 
@@ -62,9 +63,8 @@ void Context::start(flash::display::DisplayObject& displayObject) {
         const GLfloat color[] = {0.1, 0.1, 0.1, 1};
         glClearBufferfv(GL_COLOR, 0, color);
 
-
-
-        displayObject.draw(*this);
+        RenderState renderState;
+        displayObject.draw(*this, renderState);
 
 //        glDrawArrays(GL_TRIANGLES, 0, 3);
 

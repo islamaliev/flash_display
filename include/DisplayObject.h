@@ -7,6 +7,7 @@ namespace flash {
 
 namespace render {
     class Context;
+    class RenderState;
 }
 
 namespace display {
@@ -53,7 +54,7 @@ namespace display {
             return Rectangle(0, 0, m_width, m_height);
         }
 
-        virtual void draw(flash::render::Context& context);
+        virtual void draw(flash::render::Context&, flash::render::RenderState&);
 
         flash::math::Mat4 getTransform() const;
 

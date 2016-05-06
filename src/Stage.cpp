@@ -6,6 +6,7 @@ using namespace flash;
 using namespace display;
 
 using Context = flash::render::Context;
+using RenderState = flash::render::RenderState;
 using Mat4 = flash::math::Mat4;
 
 void Stage::start() {
@@ -16,6 +17,6 @@ void Stage::start() {
     context.dispose();
 }
 
-void Stage::draw(Context& context) {
-    DisplayObjectContainer::draw(context);
+void Stage::draw(Context& context, RenderState& renderState) {
+    DisplayObjectContainer::draw(context, renderState);
 }

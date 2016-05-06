@@ -2,6 +2,7 @@
 #include "DisplayObject.h"
 #include "DisplayObjectContainer.h"
 #include "Contex.h"
+#include "RenderState.h"
 
 using namespace flash::display;
 using namespace flash::render;
@@ -48,13 +49,13 @@ namespace {
     }
 }
 
-void DisplayObject::draw(Context& context) {
+void DisplayObject::draw(Context& context, RenderState& renderState) {
     if (!initialized) {
         initVAO(_vao );
         initialized = true;
     }
 
-    context.setMatrix(getTransform());
+    context.setMatrix(renderState.transform * getTransform());
 
     glBindVertexArray(_vao);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);

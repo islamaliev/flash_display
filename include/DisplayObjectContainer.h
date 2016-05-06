@@ -62,7 +62,7 @@ namespace display {
             return std::find(m_children.cbegin(), m_children.cend(), child) != m_children.cend();
         }
 
-        void draw(flash::render::Context& context) override;
+        void draw(flash::render::Context&, flash::render::RenderState&) override;
 
         Rectangle getBounds(DisplayObject* targetSpace) const override;
 

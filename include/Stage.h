@@ -15,7 +15,7 @@ namespace display {
 
         void start();
 
-        void draw(flash::render::Context& context) override;
+        void draw(flash::render::Context&, flash::render::RenderState&) override;
     };
 
 }
