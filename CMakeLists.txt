@@ -28,9 +28,27 @@ set(${PROJECT_NAME}_INCLUDE_DIRS
 
 include_directories(${${PROJECT_NAME}_INCLUDE_DIRS})
 
+
+
+
+find_library(FREEIMAGE_LIB
+        NAMES freeimage
+        PATHS freeimage/lib)
+
+set(FREEIMAGE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/freeimage/include)
+include_directories(${FREEIMAGE_INCLUDE_DIRS})
+
+
+message("freeimage include = " ${FREEIMAGE_INCLUDE_DIRS})
+message("freeimage lib = " ${FREEIMAGE_LIB})
+
+
+
 file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 add_library(${TARGET_NAME} ${SOURCES})
 set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 link_glfw(${TARGET_NAME})
 link_jpeg(${TARGET_NAME})
 target_link_libraries(${TARGET_NAME} ${MATH_LIB_TARGET_NAME})
+
+target_link_libraries(${TARGET_NAME} ${FREEIMAGE_LIB})

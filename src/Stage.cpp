@@ -12,7 +12,7 @@ using Mat4 = flash::math::Mat4;
 void Stage::start() {
     Context context;
     context.init((unsigned) width(), (unsigned) height());
-    context.setProjection(Mat4::orthographicProjection(0, 800, 0, 600, -1, 20));
+    context.setProjection(Mat4::orthographicProjection(0, width(), 0, height(), -1, 20));
     context.start(*this);
     context.dispose();
 }

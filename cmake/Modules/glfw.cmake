@@ -12,6 +12,9 @@ set(GL_LIBRARIES ${OPENGL_LIBRARIES})
 find_package(GLEW REQUIRED)
 list(APPEND GL_LIBRARIES ${GLEW_LIBRARIES})
 
+find_package(PNG REQUIRED)
+list(APPEND GL_LIBRARIES ${PNG_LIBRARIES})
+
 include_directories(${GLEW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS} ${glfw_DIR}/include)
 
 function(link_glfw target)
