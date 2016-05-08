@@ -12,7 +12,7 @@ namespace core {
 
         Color() = default;
 
-        Color(float r, float g, float b)
+        Color(unsigned char r, unsigned char g, unsigned char b)
                 : r(r)
                 , g(g)
                 , b(b) {}
@@ -21,46 +21,46 @@ namespace core {
             set(value);
         }
 
-        unsigned char R() const {
-            return (unsigned char) (r * BYTE_MASK);
+        float R() const {
+            return (float) (r * FLOAT_CONVERTER);
         }
 
-        unsigned char G() const {
-            return (unsigned char) (g * BYTE_MASK);
+        float G() const {
+            return (float) (g * FLOAT_CONVERTER);
         }
 
-        unsigned char B() const {
-            return (unsigned char) (b * BYTE_MASK);
+        float B() const {
+            return (float) (b * FLOAT_CONVERTER);
         }
 
-        void setR(unsigned char value) {
-            r = value * FLOAT_CONVERTER;
+        void setR(float value) {
+            r = value * BYTE_MASK;
         }
 
-        void setG(unsigned char value) {
-            g = value * FLOAT_CONVERTER;
+        void setG(float value) {
+            g = value * BYTE_MASK;
         }
 
-        void setB(unsigned char value) {
-            b = value * FLOAT_CONVERTER;
+        void setB(float value) {
+            b = value * BYTE_MASK;
         }
 
-        void set(float r, float g, float b) {
+        void set(unsigned char r, unsigned char g, unsigned char b) {
             this->r = r;
             this->g = g;
             this->b = b;
         }
 
-        void set(unsigned char R, unsigned char G, unsigned char B) {
-            r = R * FLOAT_CONVERTER;
-            g = G * FLOAT_CONVERTER;
-            b = B * FLOAT_CONVERTER;
+        void set(float R, float G, float B) {
+            r = R * BYTE_MASK;
+            g = G * BYTE_MASK;
+            b = B * BYTE_MASK;
         }
 
         void set(unsigned value) {
-            b = (value & BYTE_MASK) * FLOAT_CONVERTER;
-            g = (value >> 8 & BYTE_MASK) * FLOAT_CONVERTER;
-            r = (value >> 16 & BYTE_MASK) * FLOAT_CONVERTER;
+            b = value & BYTE_MASK;
+            g = value >> 8 & BYTE_MASK;
+            r = value >> 16 & BYTE_MASK;
         }
 
         Color operator+(const Color& other) const {
@@ -115,22 +115,22 @@ namespace core {
             return *this;
         }
 
-        Color operator+(float scalar) const {
+        Color operator+(unsigned char scalar) const {
             return Color(r + scalar, g + scalar, b + scalar);
         }
 
-        Color& operator+=(float scalar) {
+        Color& operator+=(unsigned char scalar) {
             r += scalar;
             g += scalar;
             b += scalar;
             return *this;
         }
 
-        Color operator-(float scalar) const {
+        Color operator-(unsigned char scalar) const {
             return Color(r - scalar, g - scalar, b - scalar);
         }
 
-        Color& operator-=(float scalar) {
+        Color& operator-=(unsigned char scalar) {
             r -= scalar;
             g -= scalar;
             b -= scalar;
@@ -149,35 +149,24 @@ namespace core {
         }
 
         Color operator/(float scalar) const {
-            float div = 1 / scalar;
-            return *this * div;
+            return *this * (1.f / scalar);
         }
 
         Color& operator/=(float scalar) {
-            float div = 1 / scalar;
-            *this *= div;
+            *this *= 1.f / scalar;
             return *this;
         }
 
         unsigned uint() const {
-            unsigned char rr = (unsigned char) (r * BYTE_MASK);
-            unsigned char gg = (unsigned char) (g * BYTE_MASK);
-            unsigned char bb = (unsigned char) (b * BYTE_MASK);
-            unsigned result(bb);
-            result |= rr << 16;
-            result |= gg << 8;
+            unsigned result(b);
+            result |= g << 8;
+            result |= r << 16;
             return result;
         }
 
-        void clamp() {
-            if (r > 1) r = 1;
-            if (g > 1) g = 1;
-            if (b > 1) b = 1;
-        }
-
-        float r{0};
-        float g{0};
-        float b{0};
+        unsigned char r{0};
+        unsigned char g{0};
+        unsigned char b{0};
     };
 
 }
