@@ -12,9 +12,10 @@ set(${PROJECT_NAME}_TARGET_NAME ${TARGET_NAME}
         CACHE INTERNAL "${PROJECT_NAME}: Lib Binary Name" FORCE)
 
 set(DEPENDENCIES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies)
+
 include(glfw)
 
-
+include(jpeg)
 
 set(MATH_LIB flash_math)
 add_subdirectory(${DEPENDENCIES_DIR}/${MATH_LIB})
@@ -31,4 +32,5 @@ file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 add_library(${TARGET_NAME} ${SOURCES})
 set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 link_glfw(${TARGET_NAME})
+link_jpeg(${TARGET_NAME})
 target_link_libraries(${TARGET_NAME} ${MATH_LIB_TARGET_NAME})
