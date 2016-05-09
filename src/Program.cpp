@@ -82,11 +82,14 @@ void Program::init() {
     const std::string& fragShaderCode = R"shaderCode(
         #version 330 core
 
-        out vec3 color;
+        uniform sampler2D s;
+
+        out vec4 color;
 
         void main()
         {
-            color = vec3(1,0,0);
+            color = texelFetch(s, ivec2(gl_FragCoord.xy), 0);
+            //color = vec4(1, 0, 0, 1);
         })shaderCode";
 
     vertShader = glCreateShader(GL_VERTEX_SHADER);

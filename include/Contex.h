@@ -4,6 +4,7 @@ namespace flash {
 
 namespace display {
     class DisplayObject;
+    class Texture;
 }
 
 namespace math {
@@ -22,6 +23,8 @@ namespace render {
         void setMatrix(const flash::math::Mat4& matrix);
 
         void setProjection(const flash::math::Mat4& matrix);
+
+        void setTexture(const display::Texture*);
     };
 
 }

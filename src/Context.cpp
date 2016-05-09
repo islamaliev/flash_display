@@ -5,8 +5,10 @@
 #include "DisplayObject.h"
 #include <iostream>
 #include <RenderState.h>
+#include "Texture.h"
 
 using Program = flash::render::Program;
+using Texture = flash::display::Texture;
 
 namespace {
     GLuint _vao;
@@ -86,4 +88,13 @@ void Context::setMatrix(const flash::math::Mat4& matrix) {
 
 void Context::setProjection(const flash::math::Mat4& matrix) {
     program.setUniform("projection", matrix);
+}
+
+void Context::setTexture(const Texture* texture) {
+    unsigned int texture_id;
+    glGenTextures(1,&texture_id);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+//    gluBuild2DMipmaps(GL_TEXTURE_2D, 3, texture->width(), texture->height(), GL_RGB, GL_UNSIGNED_BYTE, texture->data());
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB, texture->width(), texture->height());
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture->width(), texture->height(), GL_RGB, GL_UNSIGNED_BYTE, texture->data());
 }
