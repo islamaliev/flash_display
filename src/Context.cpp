@@ -47,6 +47,7 @@ void Context::init(unsigned width, unsigned height) {
     printf("OpenGL version supported %s\n", version);
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE);
     glDepthFunc(GL_LESS);
 
     program.init();
@@ -90,11 +91,21 @@ void Context::setProjection(const flash::math::Mat4& matrix) {
     program.setUniform("projection", matrix);
 }
 
+bool textInit = false;
+
 void Context::setTexture(const Texture* texture) {
-    unsigned int texture_id;
-    glGenTextures(1,&texture_id);
-    glBindTexture(GL_TEXTURE_2D, texture_id);
-//    gluBuild2DMipmaps(GL_TEXTURE_2D, 3, texture->width(), texture->height(), GL_RGB, GL_UNSIGNED_BYTE, texture->data());
-    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB, texture->width(), texture->height());
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture->width(), texture->height(), GL_RGB, GL_UNSIGNED_BYTE, texture->data());
+    if (!textInit)
+    {
+        unsigned int texture_id;
+        glGenTextures(1, &texture_id);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture_id);
+        glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB, texture->width(), texture->height());
+    //    gluBuild2DMipmaps(GL_TEXTURE_2D, 3, texture->width(), texture->height(), GL_RGB, GL_UNSIGNED_BYTE, texture->data());
+    //    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture->width(), texture->height(), 0, GL_RGB, GL_UNSIGNED_BYTE, texture->data());
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture->width(), texture->height(), GL_RGB, GL_UNSIGNED_BYTE, texture->data());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        program.setUniform("s", 0);
+        textInit = true;
+    }
 }

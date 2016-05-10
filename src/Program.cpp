@@ -75,7 +75,12 @@ void Program::init() {
         uniform mat4 matrix;
         uniform mat4 projection;
 
-        void main(){
+        out VS_OUT {
+            vec2 tc;
+        } vs_out;
+
+        void main() {
+            vs_out.tc = position.xy;
             gl_Position = projection * matrix * vec4(position, 1.0);
         })shaderCode";
 
@@ -86,10 +91,18 @@ void Program::init() {
 
         out vec4 color;
 
+        in VS_OUT {
+            vec2 tc;
+        } fs_in;
+
         void main()
         {
-            color = texelFetch(s, ivec2(gl_FragCoord.xy), 0);
+            color = texture(s, fs_in.tc);
+//            color = vec4(fs_in.tc.x, fs_in.tc.y, 0, 1);
+            //color = texelFetch(s, ivec2(gl_FragCoord.xy), 0);
             //color = vec4(1, 0, 0, 1);
+            //vec4 c = texture(s, vec2(0.1, 0.1));
+            //color = vec4(c.rgb, 1.0);
         })shaderCode";
 
     vertShader = glCreateShader(GL_VERTEX_SHADER);
@@ -115,4 +128,9 @@ void Program::dispose() {
 void Program::setUniform(const char* name, const flash::math::Mat4& matrix) {
     const GLint matrixLocation = glGetUniformLocation(program, name);
     glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, matrix);
+}
+
+void Program::setUniform(const char* name, int val) {
+    const GLint matrixLocation = glGetUniformLocation(program, name);
+    glUniform1i(matrixLocation, val);
 }

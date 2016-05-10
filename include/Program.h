@@ -21,6 +21,8 @@ namespace render {
         void dispose();
 
         void setUniform(const char* name, const flash::math::Mat4& matrix);
+
+        void setUniform(const char* name, int val);
     };
 
 }
