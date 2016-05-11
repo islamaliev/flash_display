@@ -80,7 +80,8 @@ void Program::init() {
         } vs_out;
 
         void main() {
-            vs_out.tc = position.xy;
+            vs_out.tc.x = position.x;
+            vs_out.tc.y = 1 - position.y;
             gl_Position = projection * matrix * vec4(position, 1.0);
         })shaderCode";
 
