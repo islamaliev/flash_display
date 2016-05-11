@@ -75,7 +75,7 @@ namespace {
         fclose(f);
     }
 
-    void bla(const char *filename, unsigned int width, unsigned int height, GLubyte **pixels) {
+    void save(const char* filename, unsigned int width, unsigned int height, GLubyte** pixels) {
         FreeImage_Initialise();
 
         constexpr unsigned CH = 3;
@@ -208,7 +208,7 @@ void Context::start(flash::display::DisplayObject& displayObject) {
 
             snprintf(filename, SCREENSHOT_MAX_FILENAME, "tmp%d.png", nframes);
 //          screenshot_png(filename, w, h, &pixels, &png_bytes, &png_rows);
-            bla(filename, w, h, &pixels);
+            save(filename, w, h, &pixels);
             return;
         } else {
             glfwSwapBuffers(window);
