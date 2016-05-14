@@ -4,14 +4,8 @@
 #include "Program.h"
 #include "DisplayObject.h"
 #include <iostream>
-#include <RenderState.h>
+#include "RenderState.h"
 #include "Texture.h"
-#include <assert.h>
-
-
-#include <png.h>
-#include "FreeImage.h"
-
 
 using Program = flash::render::Program;
 using Texture = flash::display::Texture;
@@ -20,10 +14,19 @@ namespace {
     GLuint _vao;
     Program program;
     GLFWwindow* window;
+}
 
-    bool offscreen = true;
 
-    GLubyte *pixels = NULL;
+#ifdef OFFSCREEN
+#include <assert.h>
+#include <png.h>
+#include <jpeglib.h>
+
+//extern void(*offscreenCallback)();
+extern void offscreenCallback();
+
+namespace {
+
     GLuint fbo;
     GLuint rbo_color;
     GLuint rbo_depth;
@@ -31,27 +34,45 @@ namespace {
     unsigned w;
     unsigned h;
 
-    png_byte *png_bytes = NULL;
-    png_byte **png_rows = NULL;
-
     enum Constants { SCREENSHOT_MAX_FILENAME = 256 };
     unsigned int nframes = 0;
 
+    void prepareOffscreenBuffer() {
+        glGenFramebuffers(1, &fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-    void screenshot_png(const char *filename, unsigned int width, unsigned int height,
-                               GLubyte **pixels, png_byte **png_bytes, png_byte ***png_rows) {
+        glGenRenderbuffers(1, &rbo_color);
+        glBindRenderbuffer(GL_RENDERBUFFER, rbo_color);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB565, w, h);
+        glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo_color);
+
+        glGenRenderbuffers(1, &rbo_depth);
+        glBindRenderbuffer(GL_RENDERBUFFER, rbo_depth);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, w, h);
+        glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo_depth);
+
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
+
+        assert(glCheckFramebufferStatus(GL_FRAMEBUFFER));
+        int glget;
+        glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &glget);
+        assert(w * h < (unsigned int) glget);
+    }
+
+    void savePNG(const char *filename) {
         size_t i, nvals;
-        const size_t format_nchannels = 4;
+        const size_t format_nchannels = 3;
         FILE *f = fopen(filename, "wb");
-        nvals = format_nchannels * width * height;
-        *pixels = (GLubyte*) realloc(*pixels, nvals * sizeof(GLubyte));
-        *png_bytes = (png_byte*) realloc(*png_bytes, nvals * sizeof(png_byte));
-        *png_rows = (png_byte**) realloc(*png_rows, height * sizeof(png_byte*));
-        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, *pixels);
+        nvals = format_nchannels * w * h;
+
+        GLubyte* pixels = (GLubyte*) malloc(nvals * sizeof(GLubyte));
+        png_byte* png_bytes = (png_byte*) malloc(nvals * sizeof(png_byte));
+        png_byte** png_rows = (png_byte**) malloc(h * sizeof(png_byte*));
+        glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
         for (i = 0; i < nvals; i++)
-            (*png_bytes)[i] = (*pixels)[i];
-        for (i = 0; i < height; i++)
-            (*png_rows)[height - i - 1] = &(*png_bytes)[i * width * format_nchannels];
+            (png_bytes)[i] = (pixels)[i];
+        for (i = 0; i < h; i++)
+            (png_rows)[h - i - 1] = &(png_bytes)[i * w * format_nchannels];
         png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
         if (!png) abort();
         png_infop info = png_create_info_struct(png);
@@ -61,41 +82,83 @@ namespace {
         png_set_IHDR(
                 png,
                 info,
-                width,
-                height,
+                w,
+                h,
                 8,
-                PNG_COLOR_TYPE_RGBA,
+                PNG_COLOR_TYPE_RGB,
                 PNG_INTERLACE_NONE,
                 PNG_COMPRESSION_TYPE_DEFAULT,
                 PNG_FILTER_TYPE_DEFAULT
         );
         png_write_info(png, info);
-        png_write_image(png, *png_rows);
+        png_write_image(png, png_rows);
         png_write_end(png, NULL);
+        free(pixels);
+        free(png_bytes);
+        free(png_rows);
         fclose(f);
     }
 
-    void save(const char* filename, unsigned int width, unsigned int height, GLubyte** pixels) {
-        FreeImage_Initialise();
+    int saveJPEG(char* filename, unsigned width, unsigned height)
+    {
+        struct jpeg_compress_struct cinfo;
+        struct jpeg_error_mgr jerr;
+
+        /* this is a pointer to one row of image data */
+        JSAMPROW row_pointer[1];
+        FILE *outfile = fopen( filename, "wb" );
+
+        if ( !outfile )
+        {
+            printf("Error opening output jpeg file %s\n!", filename );
+            return -1;
+        }
+        cinfo.err = jpeg_std_error( &jerr );
+        jpeg_create_compress(&cinfo);
+        jpeg_stdio_dest(&cinfo, outfile);
 
         constexpr unsigned CH = 3;
         size_t bufSize = CH * width * height;
+        unsigned char* bits = (unsigned char*) malloc(bufSize);
+        glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, bits);
 
-        unsigned char* bits = (unsigned char*) realloc(*pixels, bufSize);
-        glReadPixels(0,0, width, height, GL_BGR, GL_UNSIGNED_BYTE, bits);
-
-        unsigned int pitch = ((width * CH * 8 + 31) / 32) * 4;
-        FIBITMAP* img = FreeImage_ConvertFromRawBits(bits, width, height, pitch,
-                           CH * 8, 0xFF0000, 0x00FF00, 0x0000FF, false);
-        if (FreeImage_Save(FIF_BMP, img, "/Users/islamaliev/dev/testing/cpp/flash_display/build/output.bmp", 0)) {
-            std::cout << "YEAHAAAAAAA!" << std::endl;
-        } else {
-            std::cout << "JOPA" << std::endl;
+        /* Setting the parameters of the output file here */
+        cinfo.image_width = width;
+        cinfo.image_height = height;
+        cinfo.input_components = CH;
+        cinfo.in_color_space = JCS_RGB;
+        /* default compression parameters, we shouldn't be worried about these */
+        jpeg_set_defaults( &cinfo );
+        /* Now do the compression .. */
+        jpeg_start_compress( &cinfo, TRUE );
+        size_t lastIndex = bufSize - cinfo.image_width * cinfo.input_components;
+        /* like reading a file, this time write one row at a time */
+        while( cinfo.next_scanline < cinfo.image_height )
+        {
+            row_pointer[0] = &bits[lastIndex - cinfo.next_scanline * cinfo.image_width * cinfo.input_components];
+            jpeg_write_scanlines( &cinfo, row_pointer, 1 );
         }
+        /* similar to read file, clean up after we're done compressing */
+        jpeg_finish_compress( &cinfo );
+        jpeg_destroy_compress( &cinfo );
+        fclose( outfile );
+        free(bits);
+        /* success code is 1! */
+        return 1;
+    }
 
-        FreeImage_DeInitialise();
+    void saveOffscreen() {
+        glFlush();
+        char filename[SCREENSHOT_MAX_FILENAME];
+
+        snprintf(filename, SCREENSHOT_MAX_FILENAME, "tmp%d.png", nframes++);
+        savePNG(filename);
+        offscreenCallback();
+//            saveJPEG("output.jpeg");
     }
 }
+#endif
+
 
 using namespace flash;
 using namespace render;
@@ -106,8 +169,10 @@ void Context::init(unsigned width, unsigned height) {
 //        return 1;
     }
 
+#ifdef OFFSCREEN
     w = width;
     h = height;
+#endif
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -120,9 +185,9 @@ void Context::init(unsigned width, unsigned height) {
         glfwTerminate();
 //        return 1;
     }
-    if (offscreen) {
+#ifdef OFFSCREEN
         glfwHideWindow(window);
-    }
+#endif
     glfwMakeContextCurrent(window);
 
     glewExperimental = GL_TRUE;
@@ -133,45 +198,11 @@ void Context::init(unsigned width, unsigned height) {
     printf("Renderer: %s\n", renderer);
     printf("OpenGL version supported %s\n", version);
 
-
-
-
-
-    if (offscreen) {
-        int glget;
-        /*  Framebuffer */
-        glGenFramebuffers(1, &fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-        /* Color renderbuffer. */
-        glGenRenderbuffers(1, &rbo_color);
-        glBindRenderbuffer(GL_RENDERBUFFER, rbo_color);
-        /* Storage must be one of: */
-        /* GL_RGBA4, GL_RGB565, GL_RGB5_A1, GL_DEPTH_COMPONENT16, GL_STENCIL_INDEX8. */
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB565, width, height);
-//        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB5_A1, width, height);
-        glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo_color);
-
-        /* Depth renderbuffer. */
-        glGenRenderbuffers(1, &rbo_depth);
-        glBindRenderbuffer(GL_RENDERBUFFER, rbo_depth);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
-        glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo_depth);
-
-        glReadBuffer(GL_COLOR_ATTACHMENT0);
-
-        /* Sanity check. */
-        assert(glCheckFramebufferStatus(GL_FRAMEBUFFER));
-        glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &glget);
-        assert(width * height < (unsigned int)glget);
-    } else {
-        glReadBuffer(GL_BACK);
-    }
-
-
-
-
-
+#ifdef OFFSCREEN
+    prepareOffscreenBuffer();
+#else
+    glReadBuffer(GL_BACK);
+#endif
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -195,27 +226,14 @@ void Context::start(flash::display::DisplayObject& displayObject) {
         RenderState renderState;
         displayObject.draw(*this, renderState);
 
-//        glDrawArrays(GL_TRIANGLES, 0, 3);
-
         glfwPollEvents();
-//        glfwSwapBuffers(window);
 
-
-
-        if (offscreen) {
-            glFlush();
-            char filename[SCREENSHOT_MAX_FILENAME];
-
-            snprintf(filename, SCREENSHOT_MAX_FILENAME, "tmp%d.png", nframes);
-//          screenshot_png(filename, w, h, &pixels, &png_bytes, &png_rows);
-            save(filename, w, h, &pixels);
-            return;
-        } else {
-            glfwSwapBuffers(window);
-        }
-
+#ifdef OFFSCREEN
+        saveOffscreen();
+#else
+        glfwSwapBuffers(window);
+#endif
     }
-
 }
 
 void Context::dispose() {

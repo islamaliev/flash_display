@@ -98,12 +98,8 @@ void Program::init() {
 
         void main()
         {
-            color = texture(s, fs_in.tc);
-//            color = vec4(fs_in.tc.x, fs_in.tc.y, 0, 1);
-            //color = texelFetch(s, ivec2(gl_FragCoord.xy), 0);
-            //color = vec4(1, 0, 0, 1);
-            //vec4 c = texture(s, vec2(0.1, 0.1));
-            //color = vec4(c.rgb, 1.0);
+//            color = texture(s, fs_in.tc);
+            color = vec4(1, 0, 0, 1);
         })shaderCode";
 
     vertShader = glCreateShader(GL_VERTEX_SHADER);

@@ -107,7 +107,7 @@ void FileLoader::load(const char* path) {
 
 FileLoader::~FileLoader() {
     if (m_size) {
-        delete m_data;
+        delete (char*) m_data;
         m_size = 0;
     }
 }
