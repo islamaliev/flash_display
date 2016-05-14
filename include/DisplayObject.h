@@ -20,6 +20,8 @@ namespace display {
 
         DisplayObject() = default;
 
+        virtual ~DisplayObject() {};
+
         void setX(float value) { m_x = value; }
         float x() const { return m_x; }
 

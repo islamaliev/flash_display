@@ -22,8 +22,7 @@ namespace {
 #include <png.h>
 #include <jpeglib.h>
 
-//extern void(*offscreenCallback)();
-extern void offscreenCallback();
+extern const char* nextOffscreen();
 
 namespace {
 
@@ -147,13 +146,12 @@ namespace {
         return 1;
     }
 
-    void saveOffscreen() {
+    void saveOffscreen(const char* name) {
         glFlush();
         char filename[SCREENSHOT_MAX_FILENAME];
-
-        snprintf(filename, SCREENSHOT_MAX_FILENAME, "tmp%d.png", nframes++);
+        strcpy(filename, name);
+        strcat(filename, ".png");
         savePNG(filename);
-        offscreenCallback();
 //            saveJPEG("output.jpeg");
     }
 }
@@ -223,13 +221,17 @@ void Context::start(flash::display::DisplayObject& displayObject) {
         const GLfloat color[] = {0.1, 0.1, 0.1, 1};
         glClearBufferfv(GL_COLOR, 0, color);
 
+#ifdef OFFSCREEN
+        const char* name = nextOffscreen();
+#endif
+
         RenderState renderState;
         displayObject.draw(*this, renderState);
 
         glfwPollEvents();
 
 #ifdef OFFSCREEN
-        saveOffscreen();
+        saveOffscreen(name);
 #else
         glfwSwapBuffers(window);
 #endif
