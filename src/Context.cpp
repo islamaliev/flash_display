@@ -61,8 +61,13 @@ namespace {
     void savePNG(const char *filename) {
         size_t i, nvals;
         const size_t format_nchannels = 3;
-        FILE *f = fopen(filename, "wb");
         nvals = format_nchannels * w * h;
+        FILE *f = fopen(filename, "wb");
+
+        if (!f) {
+            printf("Error opening output png file %s\n", filename );
+            return;
+        }
 
         GLubyte* pixels = (GLubyte*) malloc(nvals * sizeof(GLubyte));
         png_byte* png_bytes = (png_byte*) malloc(nvals * sizeof(png_byte));
@@ -109,7 +114,7 @@ namespace {
 
         if ( !outfile )
         {
-            printf("Error opening output jpeg file %s\n!", filename );
+            printf("Error opening output jpeg file %s\n", filename );
             return -1;
         }
         cinfo.err = jpeg_std_error( &jerr );
