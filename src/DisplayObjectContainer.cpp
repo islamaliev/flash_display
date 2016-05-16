@@ -10,7 +10,7 @@ using Rectangle = flash::core::Rectangle;
 
 void DisplayObjectContainer::draw(Context& context, RenderState& renderState) {
     flash::math::Mat4 backup = renderState.transform;
-    renderState.transform = getTransform();
+    renderState.transform *= getTransform();
     for (auto child : m_children) {
         child->draw(context, renderState);
     }
