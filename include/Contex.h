@@ -18,6 +18,8 @@ namespace render {
 
         void start(display::DisplayObject& displayObject);
 
+        void stop();
+
         void dispose();
 
         void setMatrix(const flash::math::Mat4& matrix);

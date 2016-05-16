@@ -223,6 +223,9 @@ void Context::start(flash::display::DisplayObject& displayObject) {
 
 #ifdef OFFSCREEN
         const char* name = nextOffscreen();
+        if (strlen(name) == 0) {
+            continue;
+        }
 #endif
 
         RenderState renderState;
@@ -236,6 +239,11 @@ void Context::start(flash::display::DisplayObject& displayObject) {
         glfwSwapBuffers(window);
 #endif
     }
+    dispose();
+}
+
+void Context::stop() {
+    glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
 void Context::dispose() {
