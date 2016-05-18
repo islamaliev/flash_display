@@ -72,8 +72,8 @@ void Program::init() {
 
         in vec3 position;
 
-        uniform mat4 matrix;
-        uniform mat4 projection;
+        uniform mat4 u_matrix;
+        uniform mat4 u_projection;
 
         out VS_OUT {
             vec2 tc;
@@ -82,13 +82,14 @@ void Program::init() {
         void main() {
             vs_out.tc.x = position.x;
             vs_out.tc.y = 1 - position.y;
-            gl_Position = projection * matrix * vec4(position, 1.0);
+            gl_Position = u_projection * u_matrix * vec4(position, 1.0);
         })shaderCode";
 
     const std::string& fragShaderCode = R"shaderCode(
         #version 330 core
 
-        uniform sampler2D s;
+        uniform sampler2D u_texture;
+        uniform bool u_useTexture;
 
         out vec4 color;
 
@@ -98,8 +99,11 @@ void Program::init() {
 
         void main()
         {
-//            color = texture(s, fs_in.tc);
-            color = vec4(1, 0, 0, 1);
+            if (u_useTexture) {
+                color = texture(u_texture, fs_in.tc);
+            } else {
+                color = vec4(1, 0, 0, 1);
+            }
         })shaderCode";
 
     vertShader = glCreateShader(GL_VERTEX_SHADER);

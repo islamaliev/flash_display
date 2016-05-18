@@ -16,7 +16,6 @@ namespace {
     GLFWwindow* window;
 }
 
-
 #ifdef OFFSCREEN
 #include <assert.h>
 #include <png.h>
@@ -26,33 +25,35 @@ extern const char* nextOffscreen();
 
 namespace {
 
-    GLuint fbo;
-    GLuint rbo_color;
-    GLuint rbo_depth;
+    GLuint fbo = 0;
+    GLuint rbo_depth = 0;
+    GLuint renderTexture = 0;
 
     unsigned w;
     unsigned h;
 
     enum Constants { SCREENSHOT_MAX_FILENAME = 256 };
-    unsigned int nframes = 0;
 
     void prepareOffscreenBuffer() {
+        glGenTextures(1, &renderTexture);
+        glBindTexture(GL_TEXTURE_2D, renderTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
         glGenFramebuffers(1, &fbo);
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-        glGenRenderbuffers(1, &rbo_color);
-        glBindRenderbuffer(GL_RENDERBUFFER, rbo_color);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB565, w, h);
-        glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo_color);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderTexture, 0);
 
         glGenRenderbuffers(1, &rbo_depth);
         glBindRenderbuffer(GL_RENDERBUFFER, rbo_depth);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, w, h);
-        glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo_depth);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, w, h);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo_depth);
 
-        glReadBuffer(GL_COLOR_ATTACHMENT0);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderTexture, 0);
 
-        assert(glCheckFramebufferStatus(GL_FRAMEBUFFER));
+        assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
         int glget;
         glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &glget);
         assert(w * h < (unsigned int) glget);
@@ -72,6 +73,7 @@ namespace {
         GLubyte* pixels = (GLubyte*) malloc(nvals * sizeof(GLubyte));
         png_byte* png_bytes = (png_byte*) malloc(nvals * sizeof(png_byte));
         png_byte** png_rows = (png_byte**) malloc(h * sizeof(png_byte*));
+        glBindTexture(GL_TEXTURE_2D, renderTexture);
         glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
         for (i = 0; i < nvals; i++)
             (png_bytes)[i] = (pixels)[i];
@@ -103,61 +105,12 @@ namespace {
         fclose(f);
     }
 
-    int saveJPEG(char* filename, unsigned width, unsigned height)
-    {
-        struct jpeg_compress_struct cinfo;
-        struct jpeg_error_mgr jerr;
-
-        /* this is a pointer to one row of image data */
-        JSAMPROW row_pointer[1];
-        FILE *outfile = fopen( filename, "wb" );
-
-        if ( !outfile )
-        {
-            printf("Error opening output jpeg file %s\n", filename );
-            return -1;
-        }
-        cinfo.err = jpeg_std_error( &jerr );
-        jpeg_create_compress(&cinfo);
-        jpeg_stdio_dest(&cinfo, outfile);
-
-        constexpr unsigned CH = 3;
-        size_t bufSize = CH * width * height;
-        unsigned char* bits = (unsigned char*) malloc(bufSize);
-        glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, bits);
-
-        /* Setting the parameters of the output file here */
-        cinfo.image_width = width;
-        cinfo.image_height = height;
-        cinfo.input_components = CH;
-        cinfo.in_color_space = JCS_RGB;
-        /* default compression parameters, we shouldn't be worried about these */
-        jpeg_set_defaults( &cinfo );
-        /* Now do the compression .. */
-        jpeg_start_compress( &cinfo, TRUE );
-        size_t lastIndex = bufSize - cinfo.image_width * cinfo.input_components;
-        /* like reading a file, this time write one row at a time */
-        while( cinfo.next_scanline < cinfo.image_height )
-        {
-            row_pointer[0] = &bits[lastIndex - cinfo.next_scanline * cinfo.image_width * cinfo.input_components];
-            jpeg_write_scanlines( &cinfo, row_pointer, 1 );
-        }
-        /* similar to read file, clean up after we're done compressing */
-        jpeg_finish_compress( &cinfo );
-        jpeg_destroy_compress( &cinfo );
-        fclose( outfile );
-        free(bits);
-        /* success code is 1! */
-        return 1;
-    }
-
     void saveOffscreen(const char* name) {
         glFlush();
         char filename[SCREENSHOT_MAX_FILENAME];
         strcpy(filename, name);
         strcat(filename, ".png");
         savePNG(filename);
-//            saveJPEG("output.jpeg");
     }
 }
 #endif
@@ -169,13 +122,7 @@ using namespace render;
 void Context::init(unsigned width, unsigned height) {
     if (!glfwInit()) {
         fprintf(stderr, "ERROR: could not start GLFW3\n");
-//        return 1;
     }
-
-#ifdef OFFSCREEN
-    w = width;
-    h = height;
-#endif
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -186,11 +133,7 @@ void Context::init(unsigned width, unsigned height) {
     if (!window) {
         fprintf(stderr, "ERROR: could not open window with GLFW3\n");
         glfwTerminate();
-//        return 1;
     }
-#ifdef OFFSCREEN
-        glfwHideWindow(window);
-#endif
     glfwMakeContextCurrent(window);
 
     glewExperimental = GL_TRUE;
@@ -202,6 +145,9 @@ void Context::init(unsigned width, unsigned height) {
     printf("OpenGL version supported %s\n", version);
 
 #ifdef OFFSCREEN
+    w = width;
+    h = height;
+    glfwHideWindow(window);
     prepareOffscreenBuffer();
 #else
     glReadBuffer(GL_BACK);
@@ -220,13 +166,11 @@ void Context::start(flash::display::DisplayObject& displayObject) {
 
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-//        double time = (double) clock() / 10000;
-//        const GLfloat color[] = {(float)sin(time) * 0.5f + 0.5f, (float)cos(time) * 0.5f + 0.5f, 0.4f, 1.0f};
-        const GLfloat color[] = {0.1, 0.1, 0.1, 1};
-        glClearBufferfv(GL_COLOR, 0, color);
+        glClearColor(0.1, 0.1, 0.1, 1);
+        glClearDepth(1.0f);
 
 #ifdef OFFSCREEN
+        glViewport(0, 0, w, h);
         const char* name = nextOffscreen();
         if (strlen(name) == 0) {
             continue;
@@ -240,6 +184,7 @@ void Context::start(flash::display::DisplayObject& displayObject) {
 
 #ifdef OFFSCREEN
         saveOffscreen(name);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 #else
         glfwSwapBuffers(window);
 #endif
@@ -258,11 +203,11 @@ void Context::dispose() {
 }
 
 void Context::setMatrix(const flash::math::Mat4& matrix) {
-    program.setUniform("matrix", matrix);
+    program.setUniform("u_matrix", matrix);
 }
 
 void Context::setProjection(const flash::math::Mat4& matrix) {
-    program.setUniform("projection", matrix);
+    program.setUniform("u_projection", matrix);
 }
 
 bool textInit = false;
@@ -276,7 +221,8 @@ void Context::setTexture(const Texture* texture) {
         glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB8, texture->width(), texture->height());
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture->width(), texture->height(), GL_RGB, GL_UNSIGNED_BYTE, texture->data());
 //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        program.setUniform("s", 0);
+        program.setUniform("u_texture", 0);
+        program.setUniform("u_useTexture", 1);
         textInit = true;
     }
 }
