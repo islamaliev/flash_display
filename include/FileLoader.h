@@ -18,6 +18,8 @@ namespace filesystem {
 
         std::size_t size() const noexcept { return m_size; }
 
+        void clear();
+
     private:
         std::size_t m_size{0};
         void* m_data;

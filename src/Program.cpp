@@ -132,6 +132,6 @@ void Program::setUniform(const char* name, const flash::math::Mat4& matrix) {
 }
 
 void Program::setUniform(const char* name, int val) {
-    const GLint matrixLocation = glGetUniformLocation(program, name);
-    glUniform1i(matrixLocation, val);
+    const GLint location = glGetUniformLocation(program, name);
+    glUniform1i(location, val);
 }

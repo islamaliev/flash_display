@@ -29,16 +29,23 @@ namespace display {
 
         ~Texture();
 
+        void dispose();
+
         unsigned width() const { return m_width; }
         unsigned height() const { return m_height; }
 
         const Color* data() const { return m_data; }
         Color* data() { return m_data; }
 
+        unsigned getId() const { return m_id; }
+
+        void bindData();
+
     private:
-        unsigned m_width;
-        unsigned m_height;
-        Color* m_data;
+        unsigned m_id{0};
+        unsigned m_width{0};
+        unsigned m_height{0};
+        Color* m_data{nullptr};
 
     };
 

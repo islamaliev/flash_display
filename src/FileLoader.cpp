@@ -17,31 +17,29 @@ namespace {
     Texture* decodeData(const char* FileName) {
         unsigned long x, y;
 
-        unsigned long data_size;     // length of the file
-        int channels;               //  3 =>RGB   4 =>RGBA
+        unsigned long data_size;
+        int channels;
         unsigned int type;
-        unsigned char * rowptr[1];    // pointer to an array
+        unsigned char * rowptr[1];
 
-        struct jpeg_decompress_struct info; //for our jpeg info
-        struct jpeg_error_mgr err;          //the error handler
+        struct jpeg_decompress_struct info;
+        struct jpeg_error_mgr err;
 
-        FILE* file = fopen(FileName, "rb");  //open the file
+        FILE* file = fopen(FileName, "rb");
 
         info.err = jpeg_std_error(& err);
-        jpeg_create_decompress(& info);   //fills info structure
+        jpeg_create_decompress(& info);
 
-        //if the jpeg file doesn't load
         if(!file) {
             fprintf(stderr, "Error reading JPEG file %s!", FileName);
             return 0;
         }
 
         jpeg_stdio_src(&info, file);
-        jpeg_read_header(&info, TRUE);   // read jpeg file header
+        jpeg_read_header(&info, TRUE);
 
-        jpeg_start_decompress(&info);    // decompress the file
+        jpeg_start_decompress(&info);
 
-        //set width and height
         x = info.output_width;
         y = info.output_height;
         channels = info.num_components;
@@ -52,36 +50,25 @@ namespace {
 
         Texture* texture = new Texture(x, y);
 
-        //--------------------------------------------
-        // read scanlines one at a time & put bytes
-        //    in jdata[] array. Assumes an RGB image
-        //--------------------------------------------
-        unsigned char * jdata = (unsigned char*) texture->data();        // data for the image
+        unsigned char * jdata = (unsigned char*) texture->data();
         while (info.output_scanline < info.output_height) // loop
         {
-            // Enable jpeg_read_scanlines() to fill our jdata array
-            rowptr[0] = (unsigned char *)jdata +  // secret to method
-                        3* info.output_width * info.output_scanline;
+            rowptr[0] = (unsigned char*) jdata
+                       + 3 * info.output_width * info.output_scanline;
 
             jpeg_read_scanlines(&info, rowptr, 1);
         }
-        //---------------------------------------------------
 
-        jpeg_finish_decompress(&info);   //finish decompressing
+        jpeg_finish_decompress(&info);
 
-        //----- create OpenGL tex map (omit if not needed) --------
-//        unsigned int texture_id;
-//        glGenTextures(1,&texture_id);
-//        glBindTexture(GL_TEXTURE_2D, texture_id);
-//        gluBuild2DMipmaps(GL_TEXTURE_2D,3,x,y,GL_RGB,GL_UNSIGNED_BYTE,jdata);
+        fclose(file);
 
-        fclose(file);                    //close the file
-
-        return texture;    // for OpenGL tex maps
+        return texture;
     }
 }
 
 void FileLoader::load(const char* path) {
+    clear();
     streampos size;
 
     if(strstr(path, ".jpg") - path == strlen(path) - 4) {
@@ -106,8 +93,13 @@ void FileLoader::load(const char* path) {
 }
 
 FileLoader::~FileLoader() {
+    clear();
+}
+
+void FileLoader::clear() {
     if (m_size) {
-        delete (char*) m_data;
         m_size = 0;
+        // TODO: figure out how to handle data that wasn't requested after loading
+//        delete (char*) m_data;
     }
 }

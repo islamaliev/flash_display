@@ -11,15 +11,15 @@ namespace display {
 
     class Bitmap : public DisplayObject {
     public:
-        void setTexture(const Texture* texture) {
+        void setTexture(Texture* texture) {
             m_texture = texture;
         }
 
         void draw(flash::render::Context&, flash::render::RenderState&);
 
     private:
-        const Texture* m_texture;
-
+        // TODO: should be const?
+        Texture* m_texture;
     };
 
 }

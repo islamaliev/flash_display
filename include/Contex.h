@@ -26,7 +26,9 @@ namespace render {
 
         void setProjection(const flash::math::Mat4& matrix);
 
-        void setTexture(const display::Texture*);
+        void setTexture(display::Texture*);
+
+        void unsetTexture();
     };
 
 }

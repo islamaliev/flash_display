@@ -1,4 +1,5 @@
 #include <GL/glew.h>
+#include <Bitmap.h>
 #include "DisplayObject.h"
 #include "DisplayObjectContainer.h"
 #include "Contex.h"
@@ -53,6 +54,11 @@ void DisplayObject::draw(Context& context, RenderState& renderState) {
     if (!initialized) {
         initVAO(_vao );
         initialized = true;
+    }
+
+    // TODO: ugly stuff
+    if (!dynamic_cast<Bitmap*>(this)) {
+        context.unsetTexture();
     }
 
     context.setMatrix(renderState.transform * getTransform());
