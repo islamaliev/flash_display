@@ -9,7 +9,7 @@ namespace display {
 
     class Texture;
 
-    class Bitmap : public DisplayObject {
+    class Image : public DisplayObject {
     public:
         void setTexture(Texture* texture) {
             m_texture = texture;

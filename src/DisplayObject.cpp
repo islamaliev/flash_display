@@ -1,5 +1,5 @@
 #include <GL/glew.h>
-#include <Bitmap.h>
+#include <Image.h>
 #include "DisplayObject.h"
 #include "DisplayObjectContainer.h"
 #include "Contex.h"
@@ -57,7 +57,7 @@ void DisplayObject::draw(Context& context, RenderState& renderState) {
     }
 
     // TODO: ugly stuff
-    if (!dynamic_cast<Bitmap*>(this)) {
+    if (!dynamic_cast<Image*>(this)) {
         context.unsetTexture();
     }
 

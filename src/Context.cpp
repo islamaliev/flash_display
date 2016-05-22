@@ -139,17 +139,16 @@ void Context::init(unsigned width, unsigned height) {
     glewExperimental = GL_TRUE;
     glewInit();
 
-    const GLubyte* renderer = glGetString(GL_RENDERER);
-    const GLubyte* version = glGetString(GL_VERSION);
-    printf("Renderer: %s\n", renderer);
-    printf("OpenGL version supported %s\n", version);
-
 #ifdef OFFSCREEN
     w = width;
     h = height;
     glfwHideWindow(window);
     prepareOffscreenBuffer();
 #else
+    const GLubyte* renderer = glGetString(GL_RENDERER);
+    const GLubyte* version = glGetString(GL_VERSION);
+    printf("Renderer: %s\n", renderer);
+    printf("OpenGL version supported %s\n", version);
     glReadBuffer(GL_BACK);
 #endif
 
