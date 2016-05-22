@@ -72,7 +72,7 @@ Mat4 DisplayObject::getTransform() const {
     float xt = x();
     float yt = y();
     m.translate(xt, yt, 0);
-    m.scale(scaleX(), scaleY(), 0);
+    m.scale(width(), height(), 0);
     return m;
 }
 
@@ -92,4 +92,22 @@ Mat4 DisplayObject::getTransform(DisplayObjectContainer* targetSpace) const {
         currentParent = currentParent->getParent();
     }
     return m;
+}
+
+void DisplayObject::setWidth(float value) {
+    setActualWidth(value);
+}
+
+void DisplayObject::setHeight(float value) {
+    setActualHeight(value);
+}
+
+void DisplayObject::setScaleX(float value) {
+    m_scaleX = value;
+    m_width = m_actualWidth * value;
+}
+
+void DisplayObject::setScaleY(float value) {
+    m_scaleY = value;
+    m_height = m_actualHeight * value;
 }

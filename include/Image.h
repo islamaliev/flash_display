@@ -11,11 +11,13 @@ namespace display {
 
     class Image : public DisplayObject {
     public:
-        void setTexture(Texture* texture) {
-            m_texture = texture;
-        }
+        void setTexture(Texture* texture);
 
-        void draw(flash::render::Context&, flash::render::RenderState&);
+        void draw(flash::render::Context&, flash::render::RenderState&) override;
+
+        void setWidth(float value) override;
+
+        void setHeight(float value) override;
 
     private:
         // TODO: should be const?

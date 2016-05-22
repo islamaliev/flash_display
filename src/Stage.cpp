@@ -24,5 +24,7 @@ void Stage::stop() {
 }
 
 void Stage::draw(Context& context, RenderState& renderState) {
-    DisplayObjectContainer::draw(context, renderState);
+    for (auto child : m_children) {
+        child->draw(context, renderState);
+    }
 }

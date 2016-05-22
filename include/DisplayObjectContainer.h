@@ -10,6 +10,8 @@ namespace display {
 
     class DisplayObjectContainer : public DisplayObject {
     public:
+        DisplayObjectContainer();
+
         std::size_t numChildren() const { return m_children.size(); }
 
         void addChild(DisplayObject* child) {
@@ -66,7 +68,11 @@ namespace display {
 
         Rectangle getBounds(DisplayObject* targetSpace) const override;
 
-    private:
+        void setWidth(float value) override {};
+
+        void setHeight(float value) override {};
+
+    protected:
         std::vector<DisplayObject*> m_children;
     };
 

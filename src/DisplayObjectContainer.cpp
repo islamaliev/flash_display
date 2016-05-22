@@ -8,6 +8,14 @@ using Context = flash::render::Context;
 using RenderState = flash::render::RenderState;
 using Rectangle = flash::core::Rectangle;
 
+DisplayObjectContainer::DisplayObjectContainer()
+    : DisplayObject() {
+    m_width = 1;
+    m_height = 1;
+    m_actualWidth = 1;
+    m_actualHeight = 1;
+}
+
 void DisplayObjectContainer::draw(Context& context, RenderState& renderState) {
     flash::math::Mat4 backup = renderState.transform;
     renderState.transform *= getTransform();

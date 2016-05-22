@@ -16,6 +16,8 @@ namespace display {
 
     class DisplayObject {
     public:
+        static constexpr unsigned DEFAULT_SIZE = 40;
+
         using Rectangle = flash::core::Rectangle;
 
         DisplayObject() = default;
@@ -28,16 +30,16 @@ namespace display {
         void setY(float value) { m_y = value; }
         float y() const { return m_y; }
 
-        void setWidth(float value) { m_width = value; }
+        virtual void setWidth(float value);
         float width() const { return m_width; }
 
-        void setHeight(float value) { m_height = value; }
+        virtual void setHeight(float value);
         float height() const { return m_height; }
 
-        void setScaleX(float value) { m_scaleX = value; }
+        void setScaleX(float value);
         float scaleX() const { return m_scaleX; }
 
-        void setScaleY(float value) { m_scaleY = value; }
+        void setScaleY(float value);
         float scaleY() const { return m_scaleY; }
 
         void setVisible(bool value) { m_visible = value; }
@@ -70,15 +72,24 @@ namespace display {
             return m_parent;
         }
 
+    protected:
+        void setActualWidth(float value) { m_actualWidth = value; m_width = value * m_scaleX; }
+        void setActualHeight(float value) { m_actualHeight = value; m_height = value * m_scaleY; }
+
+        // TODO: make them private
+        float m_width{DEFAULT_SIZE};
+        float m_height{DEFAULT_SIZE};
+        // TODO: get rid of unnecessary fields
+        float m_actualWidth{DEFAULT_SIZE};
+        float m_actualHeight{DEFAULT_SIZE};
+        float m_scaleX{1};
+        float m_scaleY{1};
+
     private:
         void setParent(DisplayObjectContainer* parent) { m_parent = parent; }
 
         float m_x{0};
         float m_y{0};
-        float m_width{1};
-        float m_height{1};
-        float m_scaleX{1};
-        float m_scaleY{1};
         float m_pivotX{0};
         float m_pivotY{0};
         float m_rotation{0};
