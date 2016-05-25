@@ -69,8 +69,8 @@ void DisplayObject::draw(Context& context, RenderState& renderState) {
 
 Mat4 DisplayObject::getTransform() const {
     Mat4 m;
-    float xt = x() - pivotX();
-    float yt = y() - pivotY();
+    float xt = x() - pivotX() * scaleX();
+    float yt = y() - pivotY() * scaleY();
     m.translate(xt, yt, 0);
     m.scale(width(), height(), 0);
     return m;
