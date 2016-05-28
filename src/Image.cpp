@@ -18,11 +18,11 @@ void Image::setTexture(Texture* texture) {
 }
 
 void Image::setWidth(float value) {
-    m_width = value;
-    m_scaleX = value / m_actualWidth;
+    _setWidth(value);
+    _setScaleX(value / _getActualWidth());
 }
 
 void Image::setHeight(float value) {
-    m_height = value;
-    m_scaleY = value / m_actualHeight;
+    _setHeight(value);
+    _setScaleY(value / _getActualHeight());
 }

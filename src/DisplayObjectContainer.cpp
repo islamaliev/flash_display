@@ -10,10 +10,10 @@ using Rectangle = flash::core::Rectangle;
 
 DisplayObjectContainer::DisplayObjectContainer()
     : DisplayObject() {
-    m_width = 1;
-    m_height = 1;
-    m_actualWidth = 1;
-    m_actualHeight = 1;
+    setActualWidth(1);
+    setActualHeight(1);
+    _setWidth(1);
+    _setHeight(1);
 }
 
 void DisplayObjectContainer::draw(Context& context, RenderState& renderState) {

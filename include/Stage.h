@@ -9,8 +9,8 @@ namespace display {
     class Stage : public DisplayObjectContainer {
     public:
         Stage(unsigned width, unsigned height) {
-            m_width = width;
-            m_height = height;
+            _setWidth(width);
+            _setHeight(height);
         }
 
         void start();

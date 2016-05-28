@@ -2,6 +2,7 @@
 
 #include "Rectangle.h"
 #include "Mat4.h"
+#include "SpatialComponent.h"
 
 namespace flash {
 
@@ -16,46 +17,45 @@ namespace display {
 
     class DisplayObject {
     public:
-        static constexpr unsigned DEFAULT_SIZE = 40;
 
         using Rectangle = flash::core::Rectangle;
 
-        DisplayObject() = default;
+        DisplayObject();
 
         virtual ~DisplayObject() {};
 
-        void setX(float value) { m_x = value; }
-        float x() const { return m_x; }
+        void setX(float value) { spatial().x = value; }
+        float x() const { return spatial().x; }
 
-        void setY(float value) { m_y = value; }
-        float y() const { return m_y; }
+        void setY(float value) { spatial().y = value; }
+        float y() const { return spatial().y; }
 
         virtual void setWidth(float value);
-        float width() const { return m_width; }
+        float width() const { return spatial().width; }
 
         virtual void setHeight(float value);
-        float height() const { return m_height; }
+        float height() const { return spatial().height; }
 
         void setScaleX(float value);
-        float scaleX() const { return m_scaleX; }
+        float scaleX() const { return spatial().scaleX; }
 
         void setScaleY(float value);
-        float scaleY() const { return m_scaleY; }
+        float scaleY() const { return spatial().scaleY; }
 
         void setVisible(bool value) { m_visible = value; }
         bool visible() const { return m_visible; }
 
-        void setPivotX(float value) { m_pivotX = value; }
-        float pivotX() const { return m_pivotX; }
+        void setPivotX(float value) { spatial().pivotX = value; }
+        float pivotX() const { return spatial().pivotX; }
 
-        void setPivotY(float value) { m_pivotY = value; }
-        float pivotY() const { return m_pivotY; }
+        void setPivotY(float value) { spatial().pivotY = value; }
+        float pivotY() const { return spatial().pivotY; }
 
         void setRotation(float value) { m_rotation = value; }
         float rotation() const { return m_rotation; }
 
         virtual Rectangle getBounds(DisplayObject* targetSpace) const {
-            return Rectangle(0, 0, m_width, m_height);
+            return Rectangle(0, 0, spatial().width, spatial().height);
         }
 
         virtual void draw(flash::render::Context&, flash::render::RenderState&);
@@ -73,25 +73,33 @@ namespace display {
         }
 
     protected:
-        void setActualWidth(float value) { m_actualWidth = value; m_width = value * m_scaleX; }
-        void setActualHeight(float value) { m_actualHeight = value; m_height = value * m_scaleY; }
+        void setActualWidth(float value) {
+            SpatialComponent& comp = spatial();
+            comp.actualWidth = value;
+            comp.width = value * comp.scaleX;
+        }
 
-        // TODO: make them private
-        float m_width{DEFAULT_SIZE};
-        float m_height{DEFAULT_SIZE};
-        // TODO: get rid of unnecessary fields
-        float m_actualWidth{DEFAULT_SIZE};
-        float m_actualHeight{DEFAULT_SIZE};
-        float m_scaleX{1};
-        float m_scaleY{1};
+        void setActualHeight(float value) {
+            SpatialComponent& comp = spatial();
+            comp.actualHeight = value;
+            comp.height = value * comp.scaleY;
+        }
+
+        // TODO: get rid of these methods
+        void _setWidth(float value) { spatial().width = value; }
+        void _setHeight(float value) { spatial().height = value; }
+        void _setScaleX(float value) { spatial().scaleX = value; }
+        void _setScaleY(float value) { spatial().scaleY = value; }
+        float _getActualWidth() { return spatial().actualWidth; }
+        float _getActualHeight() { return spatial().actualHeight; }
 
     private:
         void setParent(DisplayObjectContainer* parent) { m_parent = parent; }
 
-        float m_x{0};
-        float m_y{0};
-        float m_pivotX{0};
-        float m_pivotY{0};
+        SpatialComponent& spatial() { return const_cast<SpatialComponent&>(((const DisplayObject*) this)->spatial()); }
+        const SpatialComponent& spatial() const;
+
+        unsigned m_index{0};
         float m_rotation{0};
         bool m_visible{true};
         DisplayObjectContainer* m_parent{nullptr};

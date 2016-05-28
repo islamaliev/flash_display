@@ -48,6 +48,12 @@ namespace {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indecies), indecies, GL_STATIC_DRAW);
     }
+
+    flash::SpatialComponentContainer spatialComponents = flash::SpatialComponentContainer(1000);
+}
+
+DisplayObject::DisplayObject() {
+    m_index = spatialComponents.createIndex();
 }
 
 void DisplayObject::draw(Context& context, RenderState& renderState) {
@@ -103,11 +109,15 @@ void DisplayObject::setHeight(float value) {
 }
 
 void DisplayObject::setScaleX(float value) {
-    m_scaleX = value;
-    m_width = m_actualWidth * value;
+    _setScaleX(value);
+    _setWidth(_getActualWidth() * value);
 }
 
 void DisplayObject::setScaleY(float value) {
-    m_scaleY = value;
-    m_height = m_actualHeight * value;
+    _setScaleY(value);
+    _setHeight(_getActualHeight() * value);
+}
+
+const flash::SpatialComponent& DisplayObject::spatial() const {
+    return spatialComponents.getComponent(m_index);
 }
