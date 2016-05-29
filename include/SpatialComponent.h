@@ -5,18 +5,7 @@
 
 namespace flash {
 
-    class Entity {
-    public:
-        bool operator==(const Entity& other) const {
-            return m_index == other.m_index;
-        }
-
-    private:
-        unsigned m_dataIndex{0};
-        unsigned m_index{0};
-
-        friend class SpatialComponentContainer;
-    };
+    using Entity = unsigned;
 
     struct SpatialComponent {
         static constexpr unsigned DEFAULT_SIZE = 40;
@@ -38,7 +27,8 @@ namespace flash {
     public:
         explicit SpatialComponentContainer(unsigned size)
                 : m_comps(size + 1)
-                , m_entities(size + 1) {
+                , m_entities(size + 1)
+                , m_dataIndexes(size + 1) {
         }
 
         const Entity& createIndex();
@@ -50,9 +40,10 @@ namespace flash {
     private:
         unsigned nextIndex{1};
 
-        std::vector<unsigned> m_freeIndexes;
         std::vector<SpatialComponent> m_comps;
         std::vector<Entity> m_entities;
+        std::vector<unsigned> m_dataIndexes;
+        std::vector<unsigned> m_freeIndexes;
     };
 
 }

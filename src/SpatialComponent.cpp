@@ -11,22 +11,21 @@ const Entity& SpatialComponentContainer::createIndex() {
         m_freeIndexes.pop_back();
     }
     Entity& entity = m_entities[entityIndex];
-    entity.m_dataIndex = nextIndex++;
-    entity.m_index = entityIndex;
+    new (&m_comps[nextIndex]) SpatialComponent();
+    m_dataIndexes[entityIndex] = nextIndex++;
+    entity = entityIndex;
     return entity;
 }
 
 void SpatialComponentContainer::removeIndex(const Entity& index) {
     using std::swap;
     --nextIndex;
-    m_freeIndexes.push_back(index.m_index);
-    Entity& swapEntity = *std::find_if(m_entities.begin(), m_entities.end(), [=](auto& e) {
-        return e.m_dataIndex == nextIndex;
-    });
-    swapEntity.m_dataIndex = index.m_dataIndex;
-    swap(m_comps[swapEntity.m_dataIndex], m_comps[nextIndex]);
+    m_freeIndexes.push_back(index);
+    unsigned swapIndex = (unsigned) (std::find(m_dataIndexes.cbegin(), m_dataIndexes.cend(), nextIndex) - m_dataIndexes.cbegin());
+    m_dataIndexes[swapIndex] = m_dataIndexes[index];
+    swap(m_comps[m_dataIndexes[swapIndex]], m_comps[nextIndex]);
 }
 
 SpatialComponent& SpatialComponentContainer::getComponent(Entity index) {
-    return m_comps[index.m_dataIndex];
+    return m_comps[m_dataIndexes[index]];
 }
