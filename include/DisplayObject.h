@@ -99,7 +99,7 @@ namespace display {
         SpatialComponent& spatial() { return const_cast<SpatialComponent&>(((const DisplayObject*) this)->spatial()); }
         const SpatialComponent& spatial() const;
 
-        unsigned m_index{0};
+        Entity m_index;
         float m_rotation{0};
         bool m_visible{true};
         DisplayObjectContainer* m_parent{nullptr};
