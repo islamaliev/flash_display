@@ -2,6 +2,7 @@
 
 
 #include <vector>
+#include <functional>
 
 namespace flash {
 
@@ -34,6 +35,8 @@ namespace flash {
         const Entity& createIndex();
 
         void removeIndex(const Entity& index);
+
+        void forEachComponent(std::function<void(SpatialComponent&)>);
 
         SpatialComponent& getComponent(Entity index);
 

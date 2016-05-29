@@ -29,3 +29,7 @@ void SpatialComponentContainer::removeIndex(const Entity& index) {
 SpatialComponent& SpatialComponentContainer::getComponent(Entity index) {
     return m_comps[m_dataIndexes[index]];
 }
+
+void SpatialComponentContainer::forEachComponent(std::function<void(SpatialComponent&)> f) {
+    std::for_each(m_comps.begin() + 1, m_comps.begin() + nextIndex, f);
+}
