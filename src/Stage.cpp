@@ -13,6 +13,12 @@ namespace {
     Context context;
 }
 
+Stage::Stage(unsigned width, unsigned height) {
+    _setWidth(width);
+    _setHeight(height);
+    _depth() = 0;
+}
+
 void Stage::start() {
     context.init((unsigned) width(), (unsigned) height());
     context.setProjection(Mat4::orthographicProjection(0, width(), 0, height(), -1, 20));

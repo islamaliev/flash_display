@@ -16,19 +16,19 @@ namespace display {
 
         void addChild(DisplayObject* child) {
             m_children.push_back(child);
-            child->setParent(this);
+            child->_setParent(this);
         }
 
         void addChildAt(DisplayObject* child, std::size_t index) {
             auto it = m_children.begin();
             std::advance(it, index);
             m_children.insert(it, child);
-            child->setParent(this);
+            child->_setParent(this);
         }
 
         void removeChild(DisplayObject* child) {
             m_children.erase(std::remove(m_children.begin(), m_children.end(), child));
-            child->setParent(nullptr);
+            child->_setParent(nullptr);
         }
 
         DisplayObject* removeChildAt(std::size_t index) {
@@ -36,7 +36,7 @@ namespace display {
             std::advance(it, index);
             DisplayObject* result = *it;
             m_children.erase(it);
-            result->setParent(nullptr);
+            result->_setParent(nullptr);
             return result;
         }
 
@@ -50,7 +50,7 @@ namespace display {
 
         void removeChildren() {
             for (auto& child : m_children) {
-                child->setParent(nullptr);
+                child->_setParent(nullptr);
             }
             m_children.clear();
         }

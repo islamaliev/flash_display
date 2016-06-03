@@ -3,7 +3,17 @@
 
 using namespace flash;
 
-const Entity& SpatialComponentContainer::createIndex() {
+/*
+ *  container = SpatialComponentContainer(1000);
+ *
+ *  e = container.createEntity();
+ *  c = container.getSpatialComponent(e);
+ *  c.width = 10;
+ *
+ *  container.forEachComponent([](auto& c) { c.width += 1; });
+ */
+
+const Entity& SpatialComponentContainer::createEntity() {
     assert(nextIndex < m_comps.size());
     unsigned entityIndex = nextIndex;
     if (m_freeIndexes.size()) {
@@ -12,12 +22,13 @@ const Entity& SpatialComponentContainer::createIndex() {
     }
     Entity& entity = m_entities[entityIndex];
     new (&m_comps[nextIndex]) SpatialComponent();
+    new (&m_depths[nextIndex]) int(-1);
     m_dataIndexes[entityIndex] = nextIndex++;
     entity = entityIndex;
     return entity;
 }
 
-void SpatialComponentContainer::removeIndex(const Entity& index) {
+void SpatialComponentContainer::removeEntity(const Entity& index) {
     using std::swap;
     --nextIndex;
     m_freeIndexes.push_back(index);
@@ -26,8 +37,12 @@ void SpatialComponentContainer::removeIndex(const Entity& index) {
     swap(m_comps[m_dataIndexes[swapIndex]], m_comps[nextIndex]);
 }
 
-SpatialComponent& SpatialComponentContainer::getComponent(Entity index) {
+SpatialComponent& SpatialComponentContainer::getSpatialComponent(Entity index) {
     return m_comps[m_dataIndexes[index]];
+}
+
+int& SpatialComponentContainer::getDepthComponent(Entity index) {
+    return m_depths[m_dataIndexes[index]];
 }
 
 void SpatialComponentContainer::forEachComponent(std::function<void(SpatialComponent&)> f) {

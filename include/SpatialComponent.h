@@ -28,22 +28,26 @@ namespace flash {
     public:
         explicit SpatialComponentContainer(unsigned size)
                 : m_comps(size + 1)
+                , m_depths(size + 1)
                 , m_entities(size + 1)
                 , m_dataIndexes(size + 1) {
         }
 
-        const Entity& createIndex();
+        const Entity& createEntity();
 
-        void removeIndex(const Entity& index);
+        void removeEntity(const Entity& index);
 
         void forEachComponent(std::function<void(SpatialComponent&)>);
 
-        SpatialComponent& getComponent(Entity index);
+        SpatialComponent& getSpatialComponent(Entity index);
+
+        int& getDepthComponent(Entity index);
 
     private:
         unsigned nextIndex{1};
 
         std::vector<SpatialComponent> m_comps;
+        std::vector<int> m_depths;
         std::vector<Entity> m_entities;
         std::vector<unsigned> m_dataIndexes;
         std::vector<unsigned> m_freeIndexes;
