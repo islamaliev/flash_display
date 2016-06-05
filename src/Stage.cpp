@@ -16,7 +16,7 @@ namespace {
 Stage::Stage(unsigned width, unsigned height) {
     _setWidth(width);
     _setHeight(height);
-    _depth() = 0;
+    _setDepth(0);
 }
 
 void Stage::start() {

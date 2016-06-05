@@ -126,6 +126,6 @@ int DisplayObject::depth() const {
     return components.getDepthComponent(m_index);
 }
 
-int& DisplayObject::_depth() {
-    return components.getDepthComponent(m_index);
+void DisplayObject::_setDepth(int value) {
+    components.getDepthComponent(m_index) = value;
 }

@@ -98,7 +98,11 @@ namespace display {
     private:
         void _setParent(DisplayObjectContainer* parent) { m_parent = parent; }
 
-        int& _depth();
+        void _setDepth(int value);
+
+        virtual void _resetDepth() { _setDepth(-1); };
+
+        virtual void _updateDepth(int parentDepth) { _setDepth(parentDepth != -1 ? parentDepth + 1 : -1); };
 
         SpatialComponent& _spatial() { return const_cast<SpatialComponent&>(((const DisplayObject*) this)->_spatial()); }
         const SpatialComponent& _spatial() const;

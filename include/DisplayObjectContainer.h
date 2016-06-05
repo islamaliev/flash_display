@@ -17,6 +17,7 @@ namespace display {
         void addChild(DisplayObject* child) {
             m_children.push_back(child);
             child->_setParent(this);
+            child->_updateDepth(depth());
         }
 
         void addChildAt(DisplayObject* child, std::size_t index) {
@@ -24,11 +25,13 @@ namespace display {
             std::advance(it, index);
             m_children.insert(it, child);
             child->_setParent(this);
+            child->_updateDepth(depth());
         }
 
         void removeChild(DisplayObject* child) {
             m_children.erase(std::remove(m_children.begin(), m_children.end(), child));
             child->_setParent(nullptr);
+            child->_resetDepth();
         }
 
         DisplayObject* removeChildAt(std::size_t index) {
@@ -37,6 +40,7 @@ namespace display {
             DisplayObject* result = *it;
             m_children.erase(it);
             result->_setParent(nullptr);
+            result->_resetDepth();
             return result;
         }
 
@@ -49,8 +53,10 @@ namespace display {
         }
 
         void removeChildren() {
+            DisplayObject::_resetDepth();
             for (auto& child : m_children) {
                 child->_setParent(nullptr);
+                child->_resetDepth();
             }
             m_children.clear();
         }
@@ -71,6 +77,22 @@ namespace display {
         void setWidth(float value) override {};
 
         void setHeight(float value) override {};
+
+    private:
+        void _resetDepth() override {
+            DisplayObject::_resetDepth();
+            for (auto& child : m_children) {
+                child->_resetDepth();
+            }
+        }
+
+        void _updateDepth(int parentDepth) override {
+            DisplayObject::_updateDepth(parentDepth);
+            int d = depth();
+            for (auto& child : m_children) {
+                child->_updateDepth(d);
+            }
+        }
 
     protected:
         std::vector<DisplayObject*> m_children;
