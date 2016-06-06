@@ -74,6 +74,8 @@ namespace display {
 
         int depth() const;
 
+        int treeSize() const { return m_treeSize; }
+
     protected:
         void setActualWidth(float value) {
             SpatialComponent& comp = _spatial();
@@ -96,19 +98,24 @@ namespace display {
         float _getActualHeight() { return _spatial().actualHeight; }
 
     private:
+        virtual void _resetDepth() { _setDepth(-1); };
+
+        virtual void _updateDepth(int parentDepth) { _setDepth(parentDepth != -1 ? parentDepth + 1 : -1); };
+
         void _setParent(DisplayObjectContainer* parent) { m_parent = parent; }
 
         void _setDepth(int value);
 
-        virtual void _resetDepth() { _setDepth(-1); };
+        void _setTreeSize(int value) { m_treeSize = value; }
 
-        virtual void _updateDepth(int parentDepth) { _setDepth(parentDepth != -1 ? parentDepth + 1 : -1); };
+        void _alterTreeSizeBy(int value) { _setTreeSize(treeSize() + value); }
 
         SpatialComponent& _spatial() { return const_cast<SpatialComponent&>(((const DisplayObject*) this)->_spatial()); }
         const SpatialComponent& _spatial() const;
 
         Entity m_index;
         float m_rotation{0};
+        int m_treeSize{1};
         bool m_visible{true};
         DisplayObjectContainer* m_parent{nullptr};
 

@@ -18,6 +18,7 @@ namespace display {
             m_children.push_back(child);
             child->_setParent(this);
             child->_updateDepth(depth());
+            _alterTreeSizeBy(1);
         }
 
         void addChildAt(DisplayObject* child, std::size_t index) {
@@ -26,12 +27,14 @@ namespace display {
             m_children.insert(it, child);
             child->_setParent(this);
             child->_updateDepth(depth());
+            _alterTreeSizeBy(1);
         }
 
         void removeChild(DisplayObject* child) {
             m_children.erase(std::remove(m_children.begin(), m_children.end(), child));
             child->_setParent(nullptr);
             child->_resetDepth();
+            _alterTreeSizeBy(-1);
         }
 
         DisplayObject* removeChildAt(std::size_t index) {
@@ -41,6 +44,7 @@ namespace display {
             m_children.erase(it);
             result->_setParent(nullptr);
             result->_resetDepth();
+            _alterTreeSizeBy(-1);
             return result;
         }
 
@@ -54,9 +58,10 @@ namespace display {
 
         void removeChildren() {
             DisplayObject::_resetDepth();
+            _setTreeSize(1);
             for (auto& child : m_children) {
-                child->_setParent(nullptr);
                 child->_resetDepth();
+                child->_setParent(nullptr);
             }
             m_children.clear();
         }
