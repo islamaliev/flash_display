@@ -129,3 +129,9 @@ int DisplayObject::depth() const {
 void DisplayObject::_setDepth(int value) {
     components.getDepthComponent(m_index) = value;
 }
+
+void DisplayObject::_alterTreeSizeBy(int value) {
+    _setTreeSize(treeSize() + value);
+    if (m_parent)
+        m_parent->_alterTreeSizeBy(value);
+}

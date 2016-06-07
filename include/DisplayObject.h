@@ -108,7 +108,7 @@ namespace display {
 
         void _setTreeSize(int value) { m_treeSize = value; }
 
-        void _alterTreeSizeBy(int value) { _setTreeSize(treeSize() + value); }
+        void _alterTreeSizeBy(int value);
 
         SpatialComponent& _spatial() { return const_cast<SpatialComponent&>(((const DisplayObject*) this)->_spatial()); }
         const SpatialComponent& _spatial() const;
