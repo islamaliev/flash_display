@@ -15,41 +15,24 @@ namespace display {
         std::size_t numChildren() const { return m_children.size(); }
 
         void addChild(DisplayObject* child) {
-            if (child->getParent())
-                child->getParent()->_alterTreeSizeBy(-child->treeSize());
-            m_children.push_back(child);
-            child->_setParent(this);
-            child->_updateDepth(depth());
-            _alterTreeSizeBy(child->treeSize());
+            addChildAt(child, m_children.size());
         }
 
         void addChildAt(DisplayObject* child, std::size_t index) {
             if (child->getParent())
                 child->getParent()->_alterTreeSizeBy(-child->treeSize());
-            auto it = m_children.begin();
-            std::advance(it, index);
-            m_children.insert(it, child);
+            m_children.insert(m_children.begin() + index, child);
             child->_setParent(this);
             child->_updateDepth(depth());
             _alterTreeSizeBy(child->treeSize());
         }
 
         void removeChild(DisplayObject* child) {
-            m_children.erase(std::remove(m_children.begin(), m_children.end(), child));
-            child->_setParent(nullptr);
-            child->_resetDepth();
-            _alterTreeSizeBy(-child->treeSize());
+            _removeChildAt(std::find(m_children.begin(), m_children.end(), child));
         }
 
         DisplayObject* removeChildAt(std::size_t index) {
-            auto it = m_children.begin();
-            std::advance(it, index);
-            DisplayObject* child = *it;
-            m_children.erase(it);
-            child->_setParent(nullptr);
-            child->_resetDepth();
-            _alterTreeSizeBy(-child->treeSize());
-            return child;
+            return _removeChildAt(m_children.begin() + index);
         }
 
         const DisplayObject* getChildAt(std::size_t index) const {
@@ -101,6 +84,15 @@ namespace display {
             for (auto& child : m_children) {
                 child->_updateDepth(d);
             }
+        }
+
+        DisplayObject* _removeChildAt(std::vector<DisplayObject*>::const_iterator it) {
+            DisplayObject* child = *it;
+            m_children.erase(it);
+            child->_setParent(nullptr);
+            child->_resetDepth();
+            _alterTreeSizeBy(-child->treeSize());
+            return child;
         }
 
     protected:
