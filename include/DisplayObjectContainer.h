@@ -19,8 +19,15 @@ namespace display {
         }
 
         void addChildAt(DisplayObject* child, std::size_t index) {
-            if (child->getParent())
-                child->getParent()->_alterTreeSizeBy(-child->treeSize());
+            DisplayObjectContainer* parent = child->getParent();
+            if (parent) {
+                if (parent == this) {
+                    _moveChildTo(child, index);
+                    return;
+                }
+                // TODO: optimize to that when child is moved depth and tree size are calculated only once
+                parent->removeChild(child);
+            }
             m_children.insert(m_children.begin() + index, child);
             child->_setParent(this);
             child->_updateDepth(depth());
@@ -86,6 +93,13 @@ namespace display {
             }
         }
 
+        void _updateOrderIndex(int& orderIndex) override {
+            DisplayObject::_updateOrderIndex(orderIndex);
+            for (auto& child : m_children) {
+                child->_updateOrderIndex(++orderIndex);
+            }
+        }
+
         DisplayObject* _removeChildAt(std::vector<DisplayObject*>::const_iterator it) {
             DisplayObject* child = *it;
             m_children.erase(it);
@@ -95,8 +109,22 @@ namespace display {
             return child;
         }
 
-    protected:
+        void _moveChildTo(DisplayObject* child, int index) {
+            const auto& newIndex = m_children.begin() + index;
+            if (child == *newIndex || (index > 0 && child == *(newIndex - 1))) {
+                return;
+            }
+            const auto& currentIndex = std::find(m_children.begin(), m_children.end(), child);
+            bool moveLeft = currentIndex >= newIndex;
+            const auto& firstIt = moveLeft ? newIndex : currentIndex;
+            const auto& lastIt = !moveLeft ? newIndex : currentIndex + 1;
+            const auto& newFirstIt = moveLeft ? currentIndex : currentIndex + 1;
+            std::rotate(firstIt, newFirstIt, lastIt);
+        }
+
         std::vector<DisplayObject*> m_children;
+
+        friend class Stage;
     };
 
 }
