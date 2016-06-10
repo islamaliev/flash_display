@@ -126,6 +126,10 @@ int DisplayObject::depth() const {
     return components.getDepthComponent(m_index);
 }
 
+int DisplayObject::orderIndex() const {
+    return components.getOrderComponent(m_index);
+}
+
 void DisplayObject::_setDepth(int value) {
     components.getDepthComponent(m_index) = value;
 }
@@ -134,4 +138,8 @@ void DisplayObject::_alterTreeSizeBy(int value) {
     _setTreeSize(treeSize() + value);
     if (m_parent)
         m_parent->_alterTreeSizeBy(value);
+}
+
+void DisplayObject::_updateOrderIndex(int& orderIndex) {
+    components.getOrderComponent(m_index) = orderIndex;
 }

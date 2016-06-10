@@ -76,6 +76,8 @@ namespace display {
 
         int treeSize() const { return m_treeSize; }
 
+        int orderIndex() const;
+
     protected:
         void setActualWidth(float value) {
             SpatialComponent& comp = _spatial();
@@ -109,6 +111,8 @@ namespace display {
         void _setTreeSize(int value) { m_treeSize = value; }
 
         void _alterTreeSizeBy(int value);
+
+        virtual void _updateOrderIndex(int& orderIndex);
 
         SpatialComponent& _spatial() { return const_cast<SpatialComponent&>(((const DisplayObject*) this)->_spatial()); }
         const SpatialComponent& _spatial() const;
