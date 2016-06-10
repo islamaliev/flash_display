@@ -24,9 +24,9 @@ namespace flash {
         float pivotY{0};
     };
 
-    class SpatialComponentContainer {
+    class ComponentContainer {
     public:
-        explicit SpatialComponentContainer(unsigned size)
+        explicit ComponentContainer(unsigned size)
                 : m_comps(size + 1)
                 , m_depths(size + 1)
                 , m_order(size + 1)
@@ -54,7 +54,7 @@ namespace flash {
         std::vector<int> m_order;
         std::vector<Entity> m_entities;
         std::vector<unsigned> m_dataIndexes;
-        std::vector<unsigned> m_freeIndexes;
+        std::vector<unsigned> m_freeEntities;
     };
 
 }

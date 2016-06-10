@@ -49,7 +49,7 @@ namespace {
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indecies), indecies, GL_STATIC_DRAW);
     }
 
-    flash::SpatialComponentContainer components = flash::SpatialComponentContainer(1000);
+    flash::ComponentContainer components = flash::ComponentContainer(1000);
 }
 
 DisplayObject::DisplayObject() {

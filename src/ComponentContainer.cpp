@@ -1,10 +1,10 @@
 #include <assert.h>
-#include "SpatialComponent.h"
+#include "ComponentContainer.h"
 
 using namespace flash;
 
 /*
- *  container = SpatialComponentContainer(1000);
+ *  container = ComponentContainer(1000);
  *
  *  e = container.createEntity();
  *  c = container.getSpatialComponent(e);
@@ -13,12 +13,12 @@ using namespace flash;
  *  container.forEachComponent([](auto& c) { c.width += 1; });
  */
 
-const Entity& SpatialComponentContainer::createEntity() {
+const Entity& ComponentContainer::createEntity() {
     assert(nextIndex < m_comps.size());
     unsigned entityIndex = nextIndex;
-    if (m_freeIndexes.size()) {
-        entityIndex = m_freeIndexes.back();
-        m_freeIndexes.pop_back();
+    if (m_freeEntities.size()) {
+        entityIndex = m_freeEntities.back();
+        m_freeEntities.pop_back();
     }
     Entity& entity = m_entities[entityIndex];
     new (&m_comps[nextIndex]) SpatialComponent();
@@ -29,10 +29,10 @@ const Entity& SpatialComponentContainer::createEntity() {
     return entity;
 }
 
-void SpatialComponentContainer::removeEntity(const Entity& e) {
+void ComponentContainer::removeEntity(const Entity& e) {
     using std::swap;
     --nextIndex;
-    m_freeIndexes.push_back(e);
+    m_freeEntities.push_back(e);
     unsigned swapIndex = (unsigned) (std::find(m_dataIndexes.cbegin(), m_dataIndexes.cend(), nextIndex) - m_dataIndexes.cbegin());
     unsigned swapDataIndex = m_dataIndexes[swapIndex] = m_dataIndexes[e];
     swap(m_comps[swapDataIndex], m_comps[nextIndex]);
@@ -40,18 +40,18 @@ void SpatialComponentContainer::removeEntity(const Entity& e) {
     swap(m_order[swapDataIndex], m_order[nextIndex]);
 }
 
-SpatialComponent& SpatialComponentContainer::getSpatialComponent(Entity e) {
+SpatialComponent& ComponentContainer::getSpatialComponent(Entity e) {
     return m_comps[m_dataIndexes[e]];
 }
 
-int& SpatialComponentContainer::getDepthComponent(Entity e) {
+int& ComponentContainer::getDepthComponent(Entity e) {
     return m_depths[m_dataIndexes[e]];
 }
 
-int& SpatialComponentContainer::getOrderComponent(Entity e) {
+int& ComponentContainer::getOrderComponent(Entity e) {
     return m_order[m_dataIndexes[e]];
 }
 
-void SpatialComponentContainer::forEachComponent(std::function<void(SpatialComponent&)> f) {
+void ComponentContainer::forEachComponent(std::function<void(SpatialComponent&)> f) {
     std::for_each(m_comps.begin() + 1, m_comps.begin() + nextIndex, f);
 }

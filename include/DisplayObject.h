@@ -2,7 +2,7 @@
 
 #include "Rectangle.h"
 #include "Mat4.h"
-#include "SpatialComponent.h"
+#include "ComponentContainer.h"
 
 namespace flash {
 
