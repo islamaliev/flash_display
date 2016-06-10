@@ -34,8 +34,10 @@ void SpatialComponentContainer::removeEntity(const Entity& e) {
     --nextIndex;
     m_freeIndexes.push_back(e);
     unsigned swapIndex = (unsigned) (std::find(m_dataIndexes.cbegin(), m_dataIndexes.cend(), nextIndex) - m_dataIndexes.cbegin());
-    m_dataIndexes[swapIndex] = m_dataIndexes[e];
-    swap(m_comps[m_dataIndexes[swapIndex]], m_comps[nextIndex]);
+    unsigned swapDataIndex = m_dataIndexes[swapIndex] = m_dataIndexes[e];
+    swap(m_comps[swapDataIndex], m_comps[nextIndex]);
+    swap(m_depths[swapDataIndex], m_depths[nextIndex]);
+    swap(m_order[swapDataIndex], m_order[nextIndex]);
 }
 
 SpatialComponent& SpatialComponentContainer::getSpatialComponent(Entity e) {
