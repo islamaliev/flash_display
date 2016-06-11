@@ -29,9 +29,10 @@ namespace flash {
         explicit ComponentContainer(unsigned size)
                 : m_comps(size + 1)
                 , m_depths(size + 1)
+                , m_backIndexes(size + 1)
                 , m_order(size + 1)
                 , m_entities(size + 1)
-                , m_dataIndexes(size + 1) {
+                , m_dataIndexes(size + 1, 0) {
         }
 
         const Entity& createEntity();
@@ -46,14 +47,17 @@ namespace flash {
 
         int& getOrderComponent(Entity);
 
+        void sort();
+
     private:
         unsigned nextIndex{1};
 
         std::vector<SpatialComponent> m_comps;
         std::vector<int> m_depths;
+        std::vector<int> m_backIndexes;
         std::vector<int> m_order;
         std::vector<Entity> m_entities;
-        std::vector<unsigned> m_dataIndexes;
+        std::vector<int> m_dataIndexes;
         std::vector<unsigned> m_freeEntities;
     };
 

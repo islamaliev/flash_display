@@ -23,7 +23,8 @@ const Entity& ComponentContainer::createEntity() {
     Entity& entity = m_entities[entityIndex];
     new (&m_comps[nextIndex]) SpatialComponent();
     new (&m_depths[nextIndex]) int(-1);
-    new (&m_order[nextIndex]) int(-1);
+    new (&m_backIndexes[nextIndex]) int(entityIndex);
+    new (&m_order[entityIndex]) int(-1);
     m_dataIndexes[entityIndex] = nextIndex++;
     entity = entityIndex;
     return entity;
@@ -33,11 +34,11 @@ void ComponentContainer::removeEntity(const Entity& e) {
     using std::swap;
     --nextIndex;
     m_freeEntities.push_back(e);
-    unsigned swapIndex = (unsigned) (std::find(m_dataIndexes.cbegin(), m_dataIndexes.cend(), nextIndex) - m_dataIndexes.cbegin());
-    unsigned swapDataIndex = m_dataIndexes[swapIndex] = m_dataIndexes[e];
-    swap(m_comps[swapDataIndex], m_comps[nextIndex]);
-    swap(m_depths[swapDataIndex], m_depths[nextIndex]);
-    swap(m_order[swapDataIndex], m_order[nextIndex]);
+    int swapIndex = m_dataIndexes[nextIndex];
+    int swapDataIndex = m_dataIndexes[swapIndex] = m_dataIndexes[e];
+    m_comps[swapDataIndex] = m_comps[nextIndex];
+    m_depths[swapDataIndex] = m_depths[nextIndex];
+    m_backIndexes[swapDataIndex] = m_backIndexes[nextIndex];
 }
 
 SpatialComponent& ComponentContainer::getSpatialComponent(Entity e) {
@@ -49,9 +50,32 @@ int& ComponentContainer::getDepthComponent(Entity e) {
 }
 
 int& ComponentContainer::getOrderComponent(Entity e) {
-    return m_order[m_dataIndexes[e]];
+    return m_order[e];
 }
 
 void ComponentContainer::forEachComponent(std::function<void(SpatialComponent&)> f) {
     std::for_each(m_comps.begin() + 1, m_comps.begin() + nextIndex, f);
+}
+
+void ComponentContainer::sort() {
+    unsigned i = 0;
+    unsigned count = 1;
+    while (count < nextIndex) {
+        ++i;
+        if (m_dataIndexes[i] == 0) {
+            continue;
+        } else {
+            int dataIndex = m_dataIndexes[i];
+            int orderIndex = m_order[i];
+            if (dataIndex != orderIndex && orderIndex != -1) {
+                int backIndex = m_backIndexes[orderIndex];
+                m_comps[dataIndex] = m_comps[orderIndex];
+                m_depths[dataIndex] = m_depths[orderIndex];
+                m_backIndexes[dataIndex] = m_backIndexes[orderIndex];
+                m_dataIndexes[i] = orderIndex;
+                m_dataIndexes[backIndex] = dataIndex;
+            }
+            ++count;
+        }
+    }
 }
