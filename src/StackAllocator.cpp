@@ -27,6 +27,7 @@ const Marker StackAllocator::getMarker() const {
 }
 
 void StackAllocator::freeToMarker(const Marker marker) {
+    assert(marker <= m_top);
     m_top = marker;
 }
 
