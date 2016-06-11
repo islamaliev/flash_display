@@ -39,7 +39,7 @@ namespace flash {
 
         void removeEntity(const Entity&);
 
-        void forEachComponent(std::function<void(SpatialComponent&)>);
+        void forEach(std::function<void(SpatialComponent&, int)>);
 
         SpatialComponent& getSpatialComponent(Entity);
 
@@ -50,7 +50,7 @@ namespace flash {
         void sort();
 
     private:
-        unsigned nextIndex{1};
+        unsigned m_nextIndex{1};
 
         std::vector<SpatialComponent> m_comps;
         std::vector<int> m_depths;
