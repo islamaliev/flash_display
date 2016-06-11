@@ -39,6 +39,7 @@ void ComponentContainer::removeEntity(const Entity& e) {
     m_comps[swapDataIndex] = m_comps[nextIndex];
     m_depths[swapDataIndex] = m_depths[nextIndex];
     m_backIndexes[swapDataIndex] = m_backIndexes[nextIndex];
+    m_dataIndexes[e] = 0;
 }
 
 SpatialComponent& ComponentContainer::getSpatialComponent(Entity e) {
@@ -58,6 +59,7 @@ void ComponentContainer::forEachComponent(std::function<void(SpatialComponent&)>
 }
 
 void ComponentContainer::sort() {
+    using std::swap;
     unsigned i = 0;
     unsigned count = 1;
     while (count < nextIndex) {
@@ -66,12 +68,12 @@ void ComponentContainer::sort() {
             continue;
         } else {
             int dataIndex = m_dataIndexes[i];
-            int orderIndex = m_order[i];
-            if (dataIndex != orderIndex && orderIndex != -1) {
+            int orderIndex = m_order[i] + 1;
+            if (dataIndex != orderIndex && orderIndex != 0) {
                 int backIndex = m_backIndexes[orderIndex];
-                m_comps[dataIndex] = m_comps[orderIndex];
-                m_depths[dataIndex] = m_depths[orderIndex];
-                m_backIndexes[dataIndex] = m_backIndexes[orderIndex];
+                swap(m_comps[dataIndex], m_comps[orderIndex]);
+                swap(m_depths[dataIndex], m_depths[orderIndex]);
+                swap(m_backIndexes[dataIndex], m_backIndexes[orderIndex]);
                 m_dataIndexes[i] = orderIndex;
                 m_dataIndexes[backIndex] = dataIndex;
             }
