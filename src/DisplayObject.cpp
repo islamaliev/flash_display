@@ -1,4 +1,4 @@
-#include <GL/glew.h>
+//#include <GL/glew.h>
 #include <Image.h>
 #include "DisplayObject.h"
 #include "DisplayObjectContainer.h"
@@ -10,7 +10,7 @@ using namespace flash::render;
 
 using Mat4 = flash::math::Mat4;
 
-namespace {
+/*namespace {
     const unsigned FLOAT_PRO_POINT = 3;
 //    const unsigned POINTS_NUM = 6;
 
@@ -48,13 +48,13 @@ namespace {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indecies), indecies, GL_STATIC_DRAW);
     }
-}
+}*/
 
 void DisplayObject::draw(Context& context, RenderState& renderState) {
-    if (!initialized) {
-        initVAO(_vao );
-        initialized = true;
-    }
+//    if (!initialized) {
+//        initVAO(_vao );
+//        initialized = true;
+//    }
 
     // TODO: ugly stuff
     if (!dynamic_cast<Image*>(this)) {
@@ -63,8 +63,8 @@ void DisplayObject::draw(Context& context, RenderState& renderState) {
 
     context.setMatrix(renderState.transform * getTransform());
 
-    glBindVertexArray(_vao);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+//    glBindVertexArray(_vao);
+//    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 }
 
 Mat4 DisplayObject::getTransform() const {

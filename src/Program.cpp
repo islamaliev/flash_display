@@ -70,37 +70,52 @@ void Program::init() {
     const std::string& vertShaderCode = R"shaderCode(
         #version 330 core
 
-        in vec3 position;
+        layout (location = 0) in vec3 position;
+        layout (location = 1) in int u_useTexture;
+        layout (location = 2) in vec4 C0;
+        layout (location = 3) in vec4 C1;
+        layout (location = 4) in vec4 C2;
+        layout (location = 5) in vec4 C3;
+//        in sampler2D u_texture;
 
-        uniform mat4 u_matrix;
+        //uniform mat4 u_matrix;
         uniform mat4 u_projection;
 
         out VS_OUT {
             vec2 tc;
+//            sampler2D u_texture;
+            flat int u_useTexture;
         } vs_out;
 
         void main() {
+//            vs_out.u_texture = u_texture;
+            vs_out.u_useTexture = u_useTexture;
             vs_out.tc.x = position.x;
             vs_out.tc.y = 1 - position.y;
-            gl_Position = u_projection * u_matrix * vec4(position, 1.0);
+            gl_Position = u_projection * mat4(C0, C1, C2, C3) * vec4(position, 1.0);
         })shaderCode";
 
     const std::string& fragShaderCode = R"shaderCode(
         #version 330 core
 
-        uniform sampler2D u_texture;
-        uniform bool u_useTexture;
+        uniform sampler2D u_texture0;
+        uniform sampler2D u_texture1;
+        //uniform sampler2D u_texture;
+        //uniform bool u_useTexture;
 
         out vec4 color;
 
         in VS_OUT {
             vec2 tc;
+//            sampler2D u_texture;
+            flat int u_useTexture;
         } fs_in;
 
-        void main()
-        {
-            if (u_useTexture) {
-                color = texture(u_texture, fs_in.tc);
+        void main() {
+            if (fs_in.u_useTexture == 1) {
+                color = texture(u_texture0, fs_in.tc);
+            } else if (fs_in.u_useTexture == 2) {
+                color = texture(u_texture1, fs_in.tc);
             } else {
                 color = vec4(1, 0, 0, 1);
             }
