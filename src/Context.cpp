@@ -20,7 +20,6 @@ namespace {
     std::vector<Mat4> _matricies;
     std::vector<unsigned> _textures;
     std::vector<unsigned> _useTextures;
-    unsigned _matInd = 0;
     unsigned _texInd = 0;
 
     void _init() {
@@ -35,7 +34,6 @@ namespace {
     }
 
     void _clear() {
-        _matInd = 0;
         _texInd = 0;
         _matricies.clear();
         _textures.clear();
@@ -44,7 +42,7 @@ namespace {
 }
 
 namespace {
-    GLuint _vao = 0;
+//    GLuint _vao = 0;
 
     float _points[] = {
             0.0f,  1.0f,  0.0f,
@@ -59,17 +57,51 @@ namespace {
     };
 
     void _initVAO() {
-        glGenVertexArrays(1, &_vao);
+        /*glGenVertexArrays(1, &_vao);
         glBindVertexArray(_vao);
-        glEnableVertexAttribArray(0);
 
         GLuint indicesBuffer = 0;
         glGenBuffers(1, &indicesBuffer);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(_indecies), _indecies, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(_indecies), _indecies, GL_STATIC_DRAW);*/
     }
 
     int blaBlaTexture = -1;
+
+
+
+    GLuint _vao2 = 0;
+
+    void _initVAO2() {
+        float points[] = {
+                0.0f,  1.0f,  0.0f,
+                1.0f, 1.0f,  0.0f,
+                1.0f, 0.0f,  0.0f,
+                0.0f, 0.0f,  0.0f
+        };
+
+        GLint indecies[] = {
+                0, 1, 2,
+                3, 0, 2
+        };
+
+        GLuint vertexBuffer = 0;
+        glGenBuffers(1, &vertexBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+
+        _vao2 = 0;
+        glGenVertexArrays(1, &_vao2);
+        glBindVertexArray(_vao2);
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+        GLuint indicesBuffer = 0;
+        glGenBuffers(1, &indicesBuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indecies), indecies, GL_STATIC_DRAW);
+    }
 
 }
 
@@ -211,6 +243,7 @@ void Context::init(unsigned width, unsigned height) {
 
     _init();
     _initVAO();
+    _initVAO2();
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -241,6 +274,22 @@ void Context::start(flash::display::DisplayObject& displayObject) {
         RenderState renderState;
         displayObject.draw(*this, renderState);
 
+        for (int i = 0; i < _matricies.size(); ++i) {
+            if (!_useTextures[i]) {
+                program.setUniform("u_useTexture", 0);
+            } else {
+                glBindTexture(GL_TEXTURE_2D, _textures[_useTextures[i] - 1]);
+                program.setUniform("u_texture", 0);
+                program.setUniform("u_useTexture", 1);
+            }
+            program.setUniform("u_matrix", _matricies[i]);
+            glBindVertexArray(_vao2);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        }
+
+
+        /*glBindVertexArray(_vao2);
+        program.activate(nullptr);
         if (_textures.size() > 0) {
             glActiveTexture(GL_TEXTURE0);
             program.setUniform("u_texture0", GL_TEXTURE0);
@@ -262,31 +311,36 @@ void Context::start(flash::display::DisplayObject& displayObject) {
         glGenBuffers(1, &vertexBuffer);
         glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
         glBufferData(GL_ARRAY_BUFFER, pointsSize + useTexturesSize + matricesSize, NULL, GL_STATIC_DRAW);
+
         unsigned offset = 0;
         glBufferSubData(GL_ARRAY_BUFFER, offset, pointsSize, _points);
         offset += pointsSize;
         glBufferSubData(GL_ARRAY_BUFFER, offset, useTexturesSize, &_useTextures[0]);
         offset += useTexturesSize;
         glBufferSubData(GL_ARRAY_BUFFER, offset,  matricesSize, &_matricies[0]);
+
+        auto matRowSize = 4 * sizeof(float);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glVertexAttribPointer(1, 1, GL_INT, GL_FALSE, 0, (void*) pointsSize);
+        glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + useTexturesSize + 0 * matRowSize));
+        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + useTexturesSize + 1 * matRowSize));
+        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + useTexturesSize + 2 * matRowSize));
+        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + useTexturesSize + 3 * matRowSize));
+
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
         glEnableVertexAttribArray(2);
         glEnableVertexAttribArray(3);
         glEnableVertexAttribArray(4);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        glVertexAttribPointer(1, 1, GL_INT, GL_FALSE, 0, (GLvoid*) useTexturesSize);
-        glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float), (GLvoid*) (useTexturesSize + matricesSize + 0 * sizeof(float)));
-        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float), (GLvoid*) (useTexturesSize + matricesSize + 1 * sizeof(float)));
-        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float), (GLvoid*) (useTexturesSize + matricesSize + 2 * sizeof(float)));
-        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float), (GLvoid*) (useTexturesSize + matricesSize + 3 * sizeof(float)));
-
+        glEnableVertexAttribArray(5);
         glVertexAttribDivisor(1, 1);
         glVertexAttribDivisor(2, 1);
         glVertexAttribDivisor(3, 1);
         glVertexAttribDivisor(4, 1);
         glVertexAttribDivisor(5, 1);
 
-        glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr, (GLsizei) _matricies.size());
+        program.activate(nullptr);
+        glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr, (GLsizei) _matricies.size());*/
 
         glfwPollEvents();
 
@@ -312,7 +366,6 @@ void Context::dispose() {
 
 void Context::setMatrix(const flash::math::Mat4& matrix) {
     _matricies.push_back(matrix);
-    ++_matInd;
 //    program.setUniform("u_matrix", matrix);
 }
 
