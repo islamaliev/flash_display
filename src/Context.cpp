@@ -19,8 +19,7 @@ namespace {
 
     std::vector<Mat4> _matricies;
     std::vector<unsigned> _textures;
-    std::vector<unsigned> _useTextures;
-    unsigned _texInd = 0;
+    std::vector<int> _useTextures;
 
     void _init() {
         _matricies = {};
@@ -34,7 +33,6 @@ namespace {
     }
 
     void _clear() {
-        _texInd = 0;
         _matricies.clear();
         _textures.clear();
         _useTextures.clear();
@@ -42,7 +40,7 @@ namespace {
 }
 
 namespace {
-//    GLuint _vao = 0;
+    GLuint _vao = 0;
 
     float _points[] = {
             0.0f,  1.0f,  0.0f,
@@ -57,13 +55,13 @@ namespace {
     };
 
     void _initVAO() {
-        /*glGenVertexArrays(1, &_vao);
+        glGenVertexArrays(1, &_vao);
         glBindVertexArray(_vao);
 
         GLuint indicesBuffer = 0;
         glGenBuffers(1, &indicesBuffer);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(_indecies), _indecies, GL_STATIC_DRAW);*/
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(_indecies), _indecies, GL_STATIC_DRAW);
     }
 
     int blaBlaTexture = -1;
@@ -274,7 +272,8 @@ void Context::start(flash::display::DisplayObject& displayObject) {
         RenderState renderState;
         displayObject.draw(*this, renderState);
 
-        glBindVertexArray(_vao2);
+//        glBindVertexArray(_vao2);
+        glBindVertexArray(_vao);
         if (_textures.size() > 0) {
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, _textures[0]);
@@ -286,7 +285,7 @@ void Context::start(flash::display::DisplayObject& displayObject) {
             }
         }
 
-        for (int i = 0; i < _matricies.size(); ++i) {
+        /*for (int i = 0; i < _matricies.size(); ++i) {
             if (!_useTextures[i]) {
                 program.setUniform("u_useTexture", 0);
             } else {
@@ -295,25 +294,12 @@ void Context::start(flash::display::DisplayObject& displayObject) {
             program.setUniform("u_matrix", _matricies[i]);
             glBindVertexArray(_vao2);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-        }
-
-        /*glBindVertexArray(_vao2);
-        program.activate(nullptr);
-        if (_textures.size() > 0) {
-            glActiveTexture(GL_TEXTURE0);
-            program.setUniform("u_texture0", GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, _textures[0]);
-            if (_textures.size() > 1) {
-                glActiveTexture(GL_TEXTURE1);
-                program.setUniform("u_texture1", GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, _textures[1]);
-            }
-        }
+        }*/
 
         glBindVertexArray(_vao);
 
         auto pointsSize = sizeof(_points);
-        auto useTexturesSize = sizeof(unsigned) * _useTextures.size();
+        auto useTexturesSize = sizeof(int) * _useTextures.size();
         auto matricesSize = sizeof(Mat4) * _matricies.size();
 
         GLuint vertexBuffer = 0;
@@ -349,7 +335,7 @@ void Context::start(flash::display::DisplayObject& displayObject) {
         glVertexAttribDivisor(5, 1);
 
         program.activate(nullptr);
-        glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr, (GLsizei) _matricies.size());*/
+        glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr, (GLsizei) _matricies.size());
 
         glfwPollEvents();
 
@@ -391,15 +377,14 @@ void Context::setTexture(Texture* texture) {
         }
         _textures.push_back(texture->getId());
     }
-    _useTextures.push_back(blaBlaTexture == texture->getId() ? 1 : 2);
-    ++_texInd;
+    _useTextures.push_back(blaBlaTexture == texture->getId() ? 0 : 1);
+//    _useTextures.push_back(1);
 //    glBindTexture(GL_TEXTURE_2D, texture->getId());
 //    program.setUniform("u_texture", 0);
 //    program.setUniform("u_useTexture", 1);
 }
 
 void Context::unsetTexture() {
-    _useTextures.push_back(0);
-    ++_texInd;
+    _useTextures.push_back(-1);
 //    program.setUniform("u_useTexture", 0);
 }

@@ -67,34 +67,28 @@ Program::Program() {
 void Program::init() {
     Result = GL_FALSE;
 
-    /*const std::string& vertShaderCode = R"shaderCode(
+    const std::string& vertShaderCode = R"shaderCode(
         #version 330 core
 
         layout (location = 0) in vec3 position;
-//        layout (location = 1) in int u_useTexture;
-//        layout (location = 2) in vec4 C0;
-//        layout (location = 3) in vec4 C1;
-//        layout (location = 4) in vec4 C2;
-//        layout (location = 5) in vec4 C3;
-//        in sampler2D u_texture;
+        layout (location = 1) in int u_useTexture;
+        layout (location = 2) in vec4 C0;
+        layout (location = 3) in vec4 C1;
+        layout (location = 4) in vec4 C2;
+        layout (location = 5) in vec4 C3;
 
-        uniform int u_useTexture;
-        uniform mat4 u_matrix;
         uniform mat4 u_projection;
 
-        out VS_OUT {
+        out Fragment {
             vec2 tc;
-//            sampler2D u_texture;
             flat int u_textureIndex;
-        } vs_out;
+        } fragment;
 
         void main() {
-//            vs_out.u_texture = u_texture;
-            vs_out.u_textureIndex = u_useTexture;
-            vs_out.tc.x = position.x;
-            vs_out.tc.y = 1 - position.y;
-//            gl_Position = u_projection * mat4(C0, C1, C2, C3) * vec4(position, 1.0);
-            gl_Position = u_projection * u_matrix * vec4(position, 1.0);
+            fragment.tc.x = position.x;
+            fragment.tc.y = 1 - position.y;
+            fragment.u_textureIndex = u_useTexture;
+            gl_Position = u_projection * mat4(C0, C1, C2, C3) * vec4(position, 1.0);
         })shaderCode";
 
     const std::string& fragShaderCode = R"shaderCode(
@@ -102,29 +96,30 @@ void Program::init() {
 
         uniform sampler2D u_texture0;
         uniform sampler2D u_texture1;
-        //uniform sampler2D u_texture;
-        //uniform bool u_useTexture;
-
         out vec4 color;
 
-        in VS_OUT {
+        in Fragment {
             vec2 tc;
-//            sampler2D u_texture;
             flat int u_textureIndex;
-        } fs_in;
+        } fragment;
 
         void main() {
-//            if (fs_in.u_textureIndex == 1) {
-//                color = texture(u_texture0, fs_in.tc);
-//            } else if (fs_in.u_textureIndex == 2) {
-//                color = texture(u_texture1, fs_in.tc);
-//            } else {
+            if (fragment.u_textureIndex == -1) {
                 color = vec4(1, 0, 0, 1);
-//            }
-        })shaderCode";*/
+            } else if (fragment.u_textureIndex == 0) {
+//                color = texture(u_texture0, fragment.tc);
+                color = vec4(0, 1, 0, 1);
+            } else if (fragment.u_textureIndex == 1) {
+//                color = texture(u_texture1, fragment.tc);
+                color = vec4(0, 0, 1, 1);
+            } else {
+                color = vec4(1, 1, 1, 1);
+            }
+        })shaderCode";
 
-    const std::string& vertShaderCode = R"shaderCode(
+    /*const std::string& vertShaderCode = R"shaderCode(
         #version 330 core
+
         in vec3 position;
         uniform mat4 u_matrix;
         uniform mat4 u_projection;
@@ -162,7 +157,7 @@ void Program::init() {
             } else {
                 color = vec4(1, 0, 0, 1);
             }
-        })shaderCode";
+        })shaderCode";*/
 
     vertShader = glCreateShader(GL_VERTEX_SHADER);
     fragShader = glCreateShader(GL_FRAGMENT_SHADER);
