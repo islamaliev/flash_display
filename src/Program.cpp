@@ -128,27 +128,37 @@ void Program::init() {
         in vec3 position;
         uniform mat4 u_matrix;
         uniform mat4 u_projection;
-        out VS_OUT {
+        uniform int u_useTexture;
+
+        out Fragment {
             vec2 tc;
-        } vs_out;
+            flat int u_textureIndex;
+        } fragment;
+
         void main() {
-            vs_out.tc.x = position.x;
-            vs_out.tc.y = 1 - position.y;
+            fragment.tc.x = position.x;
+            fragment.tc.y = 1 - position.y;
+            fragment.u_textureIndex = u_useTexture;
             gl_Position = u_projection * u_matrix * vec4(position, 1.0);
         })shaderCode";
 
     const std::string& fragShaderCode = R"shaderCode(
         #version 330 core
-        uniform sampler2D u_texture;
-        uniform bool u_useTexture;
+
+        uniform sampler2D u_texture0;
+        uniform sampler2D u_texture1;
         out vec4 color;
-        in VS_OUT {
+
+        in Fragment {
             vec2 tc;
-        } fs_in;
-        void main()
-        {
-            if (u_useTexture) {
-                color = texture(u_texture, fs_in.tc);
+            flat int u_textureIndex;
+        } fragment;
+
+        void main() {
+            if (fragment.u_textureIndex == 1) {
+                color = texture(u_texture0, fragment.tc);
+            } else if (fragment.u_textureIndex == 2) {
+                color = texture(u_texture1, fragment.tc);
             } else {
                 color = vec4(1, 0, 0, 1);
             }
