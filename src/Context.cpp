@@ -274,19 +274,28 @@ void Context::start(flash::display::DisplayObject& displayObject) {
         RenderState renderState;
         displayObject.draw(*this, renderState);
 
+        glBindVertexArray(_vao2);
+        if (_textures.size() > 0) {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, _textures[0]);
+            program.setUniform("u_texture0", 0);
+            if (_textures.size() > 1) {
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, _textures[1]);
+                program.setUniform("u_texture1", 1);
+            }
+        }
+
         for (int i = 0; i < _matricies.size(); ++i) {
             if (!_useTextures[i]) {
                 program.setUniform("u_useTexture", 0);
             } else {
-                glBindTexture(GL_TEXTURE_2D, _textures[_useTextures[i] - 1]);
-                program.setUniform("u_texture", 0);
-                program.setUniform("u_useTexture", 1);
+                program.setUniform("u_useTexture", _useTextures[i]);
             }
             program.setUniform("u_matrix", _matricies[i]);
             glBindVertexArray(_vao2);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
         }
-
 
         /*glBindVertexArray(_vao2);
         program.activate(nullptr);
