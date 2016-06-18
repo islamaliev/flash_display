@@ -71,7 +71,7 @@ void Program::init() {
         #version 330 core
 
         layout (location = 0) in vec3 position;
-        layout (location = 1) in int u_useTexture;
+        layout (location = 1) in float u_useTexture;
         layout (location = 2) in vec4 C0;
         layout (location = 3) in vec4 C1;
         layout (location = 4) in vec4 C2;
@@ -81,7 +81,7 @@ void Program::init() {
 
         out Fragment {
             vec2 tc;
-            flat int u_textureIndex;
+            float u_textureIndex;
         } fragment;
 
         void main() {
@@ -100,64 +100,20 @@ void Program::init() {
 
         in Fragment {
             vec2 tc;
-            flat int u_textureIndex;
+            float u_textureIndex;
         } fragment;
 
         void main() {
             if (fragment.u_textureIndex == -1) {
                 color = vec4(1, 0, 0, 1);
             } else if (fragment.u_textureIndex == 0) {
-//                color = texture(u_texture0, fragment.tc);
-                color = vec4(0, 1, 0, 1);
+                color = texture(u_texture0, fragment.tc);
             } else if (fragment.u_textureIndex == 1) {
-//                color = texture(u_texture1, fragment.tc);
-                color = vec4(0, 0, 1, 1);
+                color = texture(u_texture1, fragment.tc);
             } else {
                 color = vec4(1, 1, 1, 1);
             }
         })shaderCode";
-
-    /*const std::string& vertShaderCode = R"shaderCode(
-        #version 330 core
-
-        in vec3 position;
-        uniform mat4 u_matrix;
-        uniform mat4 u_projection;
-        uniform int u_useTexture;
-
-        out Fragment {
-            vec2 tc;
-            flat int u_textureIndex;
-        } fragment;
-
-        void main() {
-            fragment.tc.x = position.x;
-            fragment.tc.y = 1 - position.y;
-            fragment.u_textureIndex = u_useTexture;
-            gl_Position = u_projection * u_matrix * vec4(position, 1.0);
-        })shaderCode";
-
-    const std::string& fragShaderCode = R"shaderCode(
-        #version 330 core
-
-        uniform sampler2D u_texture0;
-        uniform sampler2D u_texture1;
-        out vec4 color;
-
-        in Fragment {
-            vec2 tc;
-            flat int u_textureIndex;
-        } fragment;
-
-        void main() {
-            if (fragment.u_textureIndex == 1) {
-                color = texture(u_texture0, fragment.tc);
-            } else if (fragment.u_textureIndex == 2) {
-                color = texture(u_texture1, fragment.tc);
-            } else {
-                color = vec4(1, 0, 0, 1);
-            }
-        })shaderCode";*/
 
     vertShader = glCreateShader(GL_VERTEX_SHADER);
     fragShader = glCreateShader(GL_FRAGMENT_SHADER);

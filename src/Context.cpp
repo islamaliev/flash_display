@@ -19,7 +19,7 @@ namespace {
 
     std::vector<Mat4> _matricies;
     std::vector<unsigned> _textures;
-    std::vector<int> _useTextures;
+    std::vector<float> _useTextures;
 
     void _init() {
         _matricies = {};
@@ -54,6 +54,8 @@ namespace {
             3, 0, 2
     };
 
+    int _firstTexture = -1;
+
     void _initVAO() {
         glGenVertexArrays(1, &_vao);
         glBindVertexArray(_vao);
@@ -63,44 +65,6 @@ namespace {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(_indecies), _indecies, GL_STATIC_DRAW);
     }
-
-    int blaBlaTexture = -1;
-
-
-
-    GLuint _vao2 = 0;
-
-    void _initVAO2() {
-        float points[] = {
-                0.0f,  1.0f,  0.0f,
-                1.0f, 1.0f,  0.0f,
-                1.0f, 0.0f,  0.0f,
-                0.0f, 0.0f,  0.0f
-        };
-
-        GLint indecies[] = {
-                0, 1, 2,
-                3, 0, 2
-        };
-
-        GLuint vertexBuffer = 0;
-        glGenBuffers(1, &vertexBuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
-
-        _vao2 = 0;
-        glGenVertexArrays(1, &_vao2);
-        glBindVertexArray(_vao2);
-        glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-        GLuint indicesBuffer = 0;
-        glGenBuffers(1, &indicesBuffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indecies), indecies, GL_STATIC_DRAW);
-    }
-
 }
 
 #ifdef OFFSCREEN
@@ -241,7 +205,6 @@ void Context::init(unsigned width, unsigned height) {
 
     _init();
     _initVAO();
-    _initVAO2();
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -251,9 +214,6 @@ void Context::init(unsigned width, unsigned height) {
 }
 
 void Context::start(flash::display::DisplayObject& displayObject) {
-//    glGenVertexArrays(1, &_vao);
-//    glBindVertexArray(_vao);
-
     glClearColor(0.1, 0.1, 0.1, 1);
     glClearDepth(1.0f);
     while (!glfwWindowShouldClose(window)) {
@@ -272,7 +232,6 @@ void Context::start(flash::display::DisplayObject& displayObject) {
         RenderState renderState;
         displayObject.draw(*this, renderState);
 
-//        glBindVertexArray(_vao2);
         glBindVertexArray(_vao);
         if (_textures.size() > 0) {
             glActiveTexture(GL_TEXTURE0);
@@ -285,21 +244,10 @@ void Context::start(flash::display::DisplayObject& displayObject) {
             }
         }
 
-        /*for (int i = 0; i < _matricies.size(); ++i) {
-            if (!_useTextures[i]) {
-                program.setUniform("u_useTexture", 0);
-            } else {
-                program.setUniform("u_useTexture", _useTextures[i]);
-            }
-            program.setUniform("u_matrix", _matricies[i]);
-            glBindVertexArray(_vao2);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-        }*/
-
         glBindVertexArray(_vao);
 
         auto pointsSize = sizeof(_points);
-        auto useTexturesSize = sizeof(int) * _useTextures.size();
+        auto useTexturesSize = sizeof(float) * _useTextures.size();
         auto matricesSize = sizeof(Mat4) * _matricies.size();
 
         GLuint vertexBuffer = 0;
@@ -316,7 +264,7 @@ void Context::start(flash::display::DisplayObject& displayObject) {
 
         auto matRowSize = 4 * sizeof(float);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        glVertexAttribPointer(1, 1, GL_INT, GL_FALSE, 0, (void*) pointsSize);
+        glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, (void*) pointsSize);
         glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + useTexturesSize + 0 * matRowSize));
         glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + useTexturesSize + 1 * matRowSize));
         glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + useTexturesSize + 2 * matRowSize));
@@ -354,14 +302,13 @@ void Context::stop() {
 }
 
 void Context::dispose() {
-//    glDeleteVertexArrays(1, &_vao);
+    glDeleteVertexArrays(1, &_vao);
     program.dispose();
     glfwTerminate();
 }
 
 void Context::setMatrix(const flash::math::Mat4& matrix) {
     _matricies.push_back(matrix);
-//    program.setUniform("u_matrix", matrix);
 }
 
 void Context::setProjection(const flash::math::Mat4& matrix) {
@@ -372,19 +319,14 @@ void Context::setProjection(const flash::math::Mat4& matrix) {
 void Context::setTexture(Texture* texture) {
     if (!texture->getId()) {
         texture->bindData();
-        if (blaBlaTexture == -1) {
-            blaBlaTexture = texture->getId();
+        if (_firstTexture == -1) {
+            _firstTexture = texture->getId();
         }
         _textures.push_back(texture->getId());
     }
-    _useTextures.push_back(blaBlaTexture == texture->getId() ? 0 : 1);
-//    _useTextures.push_back(1);
-//    glBindTexture(GL_TEXTURE_2D, texture->getId());
-//    program.setUniform("u_texture", 0);
-//    program.setUniform("u_useTexture", 1);
+    _useTextures.push_back(_firstTexture == texture->getId() ? 0 : 1);
 }
 
 void Context::unsetTexture() {
     _useTextures.push_back(-1);
-//    program.setUniform("u_useTexture", 0);
 }
