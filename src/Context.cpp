@@ -6,25 +6,27 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
+#include "StackAllocator.h"
 #include "RenderState.h"
 #include "Texture.h"
 
 using Program = flash::render::Program;
 using Texture = flash::display::Texture;
 using Mat4 = flash::math::Mat4;
+using StackAllocator = flash::allocator::StackAllocator;
+using Marker = StackAllocator::Marker;
+
+#define MAX_TREE_DEPTH 50
 
 namespace {
     Program program;
     GLFWwindow* window;
 
-    std::vector<Mat4> _matricies;
     std::vector<unsigned> _textures;
+    StackAllocator _frameAllocator = StackAllocator(10000);
     std::vector<float> _useTextures;
 
     void _init() {
-        _matricies = {};
-        _matricies.reserve(1000);
-
         _textures = {};
         _textures.reserve(10);
 
@@ -33,7 +35,7 @@ namespace {
     }
 
     void _clear() {
-        _matricies.clear();
+        _frameAllocator.clear();
         _textures.clear();
         _useTextures.clear();
     }
@@ -217,9 +219,6 @@ void Context::start(flash::display::DisplayObject& stage) {
     glClearColor(0.1, 0.1, 0.1, 1);
     glClearDepth(1.0f);
 
-    Mat4 matStack[20];
-    matStack[0] = Mat4();
-
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -239,19 +238,25 @@ void Context::start(flash::display::DisplayObject& stage) {
         ComponentContainer& components = stage._getComponents();
         components.sort();
 
-        components.forEach([&matStack](SpatialComponent& spatial, int depth) {
+        Mat4* parentMatrices = (Mat4*) _frameAllocator.alloc(sizeof(Mat4) * MAX_TREE_DEPTH);
+        *parentMatrices = Mat4();
+
+        Marker matricesMarker = _frameAllocator.getMarker();
+
+        components.forEach([parentMatrices](SpatialComponent& spatial, int depth) {
             if (!depth)
                 return;
-            Mat4 m = Mat4();
+            Mat4* m = (Mat4*) _frameAllocator.alloc(sizeof(Mat4));
+            *m = Mat4();
             float xt = spatial.x - spatial.pivotX * spatial.scaleX;
             float yt = spatial.y - spatial.pivotY * spatial.scaleY;
-            m.translate(xt, yt, 0);
-            m.scale(spatial.width, spatial.height, 0);
-            m = matStack[depth - 1] * m;
-            matStack[depth] = m;
-            _matricies.push_back(m);
+            m->translate(xt, yt, 0);
+            m->scale(spatial.width, spatial.height, 0);
+            *m = parentMatrices[depth] = parentMatrices[depth - 1] * *m;
         });
-        
+
+        auto matricesSize = _frameAllocator.getMarker() - matricesMarker;
+
         glBindVertexArray(_vao);
         if (_textures.size() > 0) {
             glActiveTexture(GL_TEXTURE0);
@@ -268,7 +273,6 @@ void Context::start(flash::display::DisplayObject& stage) {
 
         auto pointsSize = sizeof(_points);
         auto useTexturesSize = sizeof(float) * _useTextures.size();
-        auto matricesSize = sizeof(Mat4) * _matricies.size();
 
         GLuint vertexBuffer = 0;
         glGenBuffers(1, &vertexBuffer);
@@ -280,7 +284,7 @@ void Context::start(flash::display::DisplayObject& stage) {
         offset += pointsSize;
         glBufferSubData(GL_ARRAY_BUFFER, offset, useTexturesSize, &_useTextures[0]);
         offset += useTexturesSize;
-        glBufferSubData(GL_ARRAY_BUFFER, offset,  matricesSize, &_matricies[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, offset,  matricesSize, _frameAllocator.getPointer(matricesMarker));
 
         auto matRowSize = 4 * sizeof(float);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -303,7 +307,7 @@ void Context::start(flash::display::DisplayObject& stage) {
         glVertexAttribDivisor(5, 1);
 
         program.activate(nullptr);
-        glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr, (GLsizei) _matricies.size());
+        glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr, (GLsizei) (matricesSize / sizeof(Mat4)));
 
         glfwPollEvents();
 
