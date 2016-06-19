@@ -34,3 +34,7 @@ void StackAllocator::freeToMarker(const Marker marker) {
 void StackAllocator::clear() {
     m_top = 0;
 }
+
+void* StackAllocator::getPointer(Marker marker) const {
+    return m_base + marker;
+}

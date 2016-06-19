@@ -9,11 +9,13 @@ namespace allocator {
     public:
         using Marker = size_t;
 
-        explicit StackAllocator(size_t size);
+        explicit StackAllocator(size_t);
 
         ~StackAllocator();
 
-        void* alloc(size_t size);
+        void* alloc(size_t);
+
+        void* getPointer(Marker) const;
 
         const Marker getMarker() const;
 
