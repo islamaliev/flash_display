@@ -70,39 +70,48 @@ void Program::init() {
     const std::string& vertShaderCode = R"shaderCode(
         #version 330 core
 
-        in vec3 position;
+        layout (location = 0) in vec3 position;
+        layout (location = 1) in float u_useTexture;
+        layout (location = 2) in vec4 C0;
+        layout (location = 3) in vec4 C1;
+        layout (location = 4) in vec4 C2;
+        layout (location = 5) in vec4 C3;
 
-        uniform mat4 u_matrix;
         uniform mat4 u_projection;
 
-        out VS_OUT {
+        out Fragment {
             vec2 tc;
-        } vs_out;
+            float u_textureIndex;
+        } fragment;
 
         void main() {
-            vs_out.tc.x = position.x;
-            vs_out.tc.y = 1 - position.y;
-            gl_Position = u_projection * u_matrix * vec4(position, 1.0);
+            fragment.tc.x = position.x;
+            fragment.tc.y = 1 - position.y;
+            fragment.u_textureIndex = u_useTexture;
+            gl_Position = u_projection * mat4(C0, C1, C2, C3) * vec4(position, 1.0);
         })shaderCode";
 
     const std::string& fragShaderCode = R"shaderCode(
         #version 330 core
 
-        uniform sampler2D u_texture;
-        uniform bool u_useTexture;
-
+        uniform sampler2D u_texture0;
+        uniform sampler2D u_texture1;
         out vec4 color;
 
-        in VS_OUT {
+        in Fragment {
             vec2 tc;
-        } fs_in;
+            float u_textureIndex;
+        } fragment;
 
-        void main()
-        {
-            if (u_useTexture) {
-                color = texture(u_texture, fs_in.tc);
-            } else {
+        void main() {
+            if (fragment.u_textureIndex == -1) {
                 color = vec4(1, 0, 0, 1);
+            } else if (fragment.u_textureIndex == 0) {
+                color = texture(u_texture0, fragment.tc);
+            } else if (fragment.u_textureIndex == 1) {
+                color = texture(u_texture1, fragment.tc);
+            } else {
+                color = vec4(1, 1, 1, 1);
             }
         })shaderCode";
 

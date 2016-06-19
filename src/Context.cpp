@@ -4,16 +4,67 @@
 #include "Program.h"
 #include "DisplayObject.h"
 #include <iostream>
+#include <vector>
+#include <cassert>
 #include "RenderState.h"
 #include "Texture.h"
 
 using Program = flash::render::Program;
 using Texture = flash::display::Texture;
+using Mat4 = flash::math::Mat4;
 
 namespace {
-    GLuint _vao;
     Program program;
     GLFWwindow* window;
+
+    std::vector<Mat4> _matricies;
+    std::vector<unsigned> _textures;
+    std::vector<float> _useTextures;
+
+    void _init() {
+        _matricies = {};
+        _matricies.reserve(1000);
+
+        _textures = {};
+        _textures.reserve(10);
+
+        _useTextures = {};
+        _useTextures.reserve(1000);
+    }
+
+    void _clear() {
+        _matricies.clear();
+        _textures.clear();
+        _useTextures.clear();
+    }
+}
+
+namespace {
+    GLuint _vao = 0;
+
+    float _points[] = {
+            0.0f,  1.0f,  0.0f,
+            1.0f, 1.0f,  0.0f,
+            1.0f, 0.0f,  0.0f,
+            0.0f, 0.0f,  0.0f
+    };
+
+    GLuint _indecies[] = {
+            0, 1, 2,
+            3, 0, 2
+    };
+
+    int _firstTexture = -1;
+
+    void _initVAO() {
+        glGenVertexArrays(1, &_vao);
+        glBindVertexArray(_vao);
+
+        GLuint indicesBuffer = 0;
+        glGenBuffers(1, &indicesBuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(_indecies), _indecies, GL_STATIC_DRAW);
+    }
 }
 
 #ifdef OFFSCREEN
@@ -137,7 +188,7 @@ void Context::init(unsigned width, unsigned height) {
     glfwMakeContextCurrent(window);
 
     glewExperimental = GL_TRUE;
-    glewInit();
+    assert(glewInit() == GLEW_OK);
 
 #ifdef OFFSCREEN
     w = width;
@@ -152,6 +203,9 @@ void Context::init(unsigned width, unsigned height) {
     glReadBuffer(GL_BACK);
 #endif
 
+    _init();
+    _initVAO();
+
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
@@ -160,13 +214,10 @@ void Context::init(unsigned width, unsigned height) {
 }
 
 void Context::start(flash::display::DisplayObject& displayObject) {
-    glGenVertexArrays(1, &_vao);
-    glBindVertexArray(_vao);
-
+    glClearColor(0.1, 0.1, 0.1, 1);
+    glClearDepth(1.0f);
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(0.1, 0.1, 0.1, 1);
-        glClearDepth(1.0f);
 
 #ifdef OFFSCREEN
         glViewport(0, 0, w, h);
@@ -176,8 +227,63 @@ void Context::start(flash::display::DisplayObject& displayObject) {
         }
 #endif
 
+        _clear();
+
         RenderState renderState;
         displayObject.draw(*this, renderState);
+
+        glBindVertexArray(_vao);
+        if (_textures.size() > 0) {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, _textures[0]);
+            program.setUniform("u_texture0", 0);
+            if (_textures.size() > 1) {
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, _textures[1]);
+                program.setUniform("u_texture1", 1);
+            }
+        }
+
+        glBindVertexArray(_vao);
+
+        auto pointsSize = sizeof(_points);
+        auto useTexturesSize = sizeof(float) * _useTextures.size();
+        auto matricesSize = sizeof(Mat4) * _matricies.size();
+
+        GLuint vertexBuffer = 0;
+        glGenBuffers(1, &vertexBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        glBufferData(GL_ARRAY_BUFFER, pointsSize + useTexturesSize + matricesSize, NULL, GL_STATIC_DRAW);
+
+        unsigned offset = 0;
+        glBufferSubData(GL_ARRAY_BUFFER, offset, pointsSize, _points);
+        offset += pointsSize;
+        glBufferSubData(GL_ARRAY_BUFFER, offset, useTexturesSize, &_useTextures[0]);
+        offset += useTexturesSize;
+        glBufferSubData(GL_ARRAY_BUFFER, offset,  matricesSize, &_matricies[0]);
+
+        auto matRowSize = 4 * sizeof(float);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, (void*) pointsSize);
+        glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + useTexturesSize + 0 * matRowSize));
+        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + useTexturesSize + 1 * matRowSize));
+        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + useTexturesSize + 2 * matRowSize));
+        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + useTexturesSize + 3 * matRowSize));
+
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(3);
+        glEnableVertexAttribArray(4);
+        glEnableVertexAttribArray(5);
+        glVertexAttribDivisor(1, 1);
+        glVertexAttribDivisor(2, 1);
+        glVertexAttribDivisor(3, 1);
+        glVertexAttribDivisor(4, 1);
+        glVertexAttribDivisor(5, 1);
+
+        program.activate(nullptr);
+        glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr, (GLsizei) _matricies.size());
 
         glfwPollEvents();
 
@@ -202,7 +308,7 @@ void Context::dispose() {
 }
 
 void Context::setMatrix(const flash::math::Mat4& matrix) {
-    program.setUniform("u_matrix", matrix);
+    _matricies.push_back(matrix);
 }
 
 void Context::setProjection(const flash::math::Mat4& matrix) {
@@ -213,12 +319,14 @@ void Context::setProjection(const flash::math::Mat4& matrix) {
 void Context::setTexture(Texture* texture) {
     if (!texture->getId()) {
         texture->bindData();
+        if (_firstTexture == -1) {
+            _firstTexture = texture->getId();
+        }
+        _textures.push_back(texture->getId());
     }
-    glBindTexture(GL_TEXTURE_2D, texture->getId());
-    program.setUniform("u_texture", 0);
-    program.setUniform("u_useTexture", 1);
+    _useTextures.push_back(_firstTexture == texture->getId() ? 0 : 1);
 }
 
 void Context::unsetTexture() {
-    program.setUniform("u_useTexture", 0);
+    _useTextures.push_back(-1);
 }
