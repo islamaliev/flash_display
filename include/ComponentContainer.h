@@ -13,9 +13,6 @@ namespace flash {
 
         float width{DEFAULT_SIZE};
         float height{DEFAULT_SIZE};
-        // TODO: get rid of unnecessary fields
-        float actualWidth{DEFAULT_SIZE};
-        float actualHeight{DEFAULT_SIZE};
         float scaleX{1};
         float scaleY{1};
         float x{0};
