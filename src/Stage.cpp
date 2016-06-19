@@ -1,4 +1,5 @@
 #include <Mat4.h>
+#include <RenderState.h>
 #include "Stage.h"
 #include "Contex.h"
 
@@ -27,10 +28,4 @@ void Stage::start() {
 
 void Stage::stop() {
     context.stop();
-}
-
-void Stage::draw(Context& context, RenderState& renderState) {
-    for (auto child : m_children) {
-        child->draw(context, renderState);
-    }
 }

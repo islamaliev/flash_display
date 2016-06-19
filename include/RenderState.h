@@ -9,7 +9,7 @@ namespace render {
 
     class RenderState {
     public:
-        flash::math::Mat4 transform;
+        int orderIndex{0};
     };
 
 }

@@ -14,8 +14,6 @@ namespace display {
 
         void stop();
 
-        void draw(flash::render::Context&, flash::render::RenderState&) override;
-
         void updateOrder() {
             int i = 0;
             _updateOrderIndex(i);

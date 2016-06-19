@@ -213,9 +213,13 @@ void Context::init(unsigned width, unsigned height) {
     program.activate(nullptr);
 }
 
-void Context::start(flash::display::DisplayObject& displayObject) {
+void Context::start(flash::display::DisplayObject& stage) {
     glClearColor(0.1, 0.1, 0.1, 1);
     glClearDepth(1.0f);
+
+    Mat4 matStack[20];
+    matStack[0] = Mat4();
+
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -230,8 +234,24 @@ void Context::start(flash::display::DisplayObject& displayObject) {
         _clear();
 
         RenderState renderState;
-        displayObject.draw(*this, renderState);
+        stage.draw(*this, renderState);
 
+        ComponentContainer& components = stage._getComponents();
+        components.sort();
+
+        components.forEach([&matStack](SpatialComponent& spatial, int depth) {
+            if (!depth)
+                return;
+            Mat4 m = Mat4();
+            float xt = spatial.x - spatial.pivotX * spatial.scaleX;
+            float yt = spatial.y - spatial.pivotY * spatial.scaleY;
+            m.translate(xt, yt, 0);
+            m.scale(spatial.width, spatial.height, 0);
+            m = matStack[depth - 1] * m;
+            matStack[depth] = m;
+            _matricies.push_back(m);
+        });
+        
         glBindVertexArray(_vao);
         if (_textures.size() > 0) {
             glActiveTexture(GL_TEXTURE0);
@@ -305,10 +325,6 @@ void Context::dispose() {
     glDeleteVertexArrays(1, &_vao);
     program.dispose();
     glfwTerminate();
-}
-
-void Context::setMatrix(const flash::math::Mat4& matrix) {
-    _matricies.push_back(matrix);
 }
 
 void Context::setProjection(const flash::math::Mat4& matrix) {

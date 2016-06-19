@@ -6,6 +6,8 @@
 
 namespace flash {
 
+class ComponentContainer;
+
 namespace render {
     class Context;
     class RenderState;
@@ -104,6 +106,8 @@ namespace display {
 
         virtual void _updateDepth(int parentDepth) { _setDepth(parentDepth != -1 ? parentDepth + 1 : -1); };
 
+        virtual void _updateOrderIndex(int& orderIndex);
+
         void _setParent(DisplayObjectContainer* parent) { m_parent = parent; }
 
         void _setDepth(int value);
@@ -112,7 +116,7 @@ namespace display {
 
         void _alterTreeSizeBy(int value);
 
-        virtual void _updateOrderIndex(int& orderIndex);
+        flash::ComponentContainer& _getComponents();
 
         SpatialComponent& _spatial() { return const_cast<SpatialComponent&>(((const DisplayObject*) this)->_spatial()); }
         const SpatialComponent& _spatial() const;
@@ -128,6 +132,7 @@ namespace display {
 
         friend class DisplayObjectContainer;
         friend class Stage;
+        friend class flash::render::Context;
     };
 
 }

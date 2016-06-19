@@ -17,12 +17,11 @@ DisplayObjectContainer::DisplayObjectContainer()
 }
 
 void DisplayObjectContainer::draw(Context& context, RenderState& renderState) {
-    flash::math::Mat4 backup = renderState.transform;
-    renderState.transform *= getTransform();
+    DisplayObject::_updateOrderIndex(renderState.orderIndex);
     for (auto child : m_children) {
+        ++renderState.orderIndex;
         child->draw(context, renderState);
     }
-    renderState.transform = backup;
 }
 
 Rectangle DisplayObjectContainer::getBounds(DisplayObject* targetSpace) const {

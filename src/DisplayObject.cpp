@@ -22,8 +22,6 @@ void DisplayObject::draw(Context& context, RenderState& renderState) {
     if (!dynamic_cast<Image*>(this)) {
         context.unsetTexture();
     }
-
-    context.setMatrix(renderState.transform * getTransform());
 }
 
 Mat4 DisplayObject::getTransform() const {
@@ -95,4 +93,8 @@ void DisplayObject::_alterTreeSizeBy(int value) {
 
 void DisplayObject::_updateOrderIndex(int& orderIndex) {
     components.getOrderComponent(m_index) = orderIndex;
+}
+
+flash::ComponentContainer& DisplayObject::_getComponents() {
+    return components;
 }
