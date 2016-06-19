@@ -22,22 +22,21 @@ namespace {
     Program program;
     GLFWwindow* window;
 
+    using TextureIndexType = float;
+
     std::vector<unsigned> _textures;
     StackAllocator _frameAllocator = StackAllocator(10000);
-    std::vector<float> _useTextures;
 
     void _init() {
         _textures = {};
-        _textures.reserve(10);
-
-        _useTextures = {};
-        _useTextures.reserve(1000);
+        int sizeToReserve;
+        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &sizeToReserve);
+        _textures.reserve((unsigned long) sizeToReserve);
     }
 
     void _clear() {
         _frameAllocator.clear();
         _textures.clear();
-        _useTextures.clear();
     }
 }
 
@@ -232,8 +231,12 @@ void Context::start(flash::display::DisplayObject& stage) {
 
         _clear();
 
+        Marker textureIndicesMarker = _frameAllocator.getMarker();
+
         RenderState renderState;
         stage.draw(*this, renderState);
+
+        auto useTexturesSize = _frameAllocator.getMarker() - textureIndicesMarker;
 
         ComponentContainer& components = stage._getComponents();
         components.sort();
@@ -272,7 +275,6 @@ void Context::start(flash::display::DisplayObject& stage) {
         glBindVertexArray(_vao);
 
         auto pointsSize = sizeof(_points);
-        auto useTexturesSize = sizeof(float) * _useTextures.size();
 
         GLuint vertexBuffer = 0;
         glGenBuffers(1, &vertexBuffer);
@@ -282,7 +284,7 @@ void Context::start(flash::display::DisplayObject& stage) {
         unsigned offset = 0;
         glBufferSubData(GL_ARRAY_BUFFER, offset, pointsSize, _points);
         offset += pointsSize;
-        glBufferSubData(GL_ARRAY_BUFFER, offset, useTexturesSize, &_useTextures[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, offset, useTexturesSize, _frameAllocator.getPointer(textureIndicesMarker));
         offset += useTexturesSize;
         glBufferSubData(GL_ARRAY_BUFFER, offset,  matricesSize, _frameAllocator.getPointer(matricesMarker));
 
@@ -344,9 +346,11 @@ void Context::setTexture(Texture* texture) {
         }
         _textures.push_back(texture->getId());
     }
-    _useTextures.push_back(_firstTexture == texture->getId() ? 0 : 1);
+    TextureIndexType* texInd = (TextureIndexType*) _frameAllocator.alloc(sizeof(TextureIndexType));
+    *texInd = _firstTexture == texture->getId() ? 0 : 1;
 }
 
 void Context::unsetTexture() {
-    _useTextures.push_back(-1);
+    TextureIndexType* texInd = (TextureIndexType*) _frameAllocator.alloc(sizeof(TextureIndexType));
+    *texInd = -1;
 }
