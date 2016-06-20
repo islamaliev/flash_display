@@ -24,7 +24,7 @@ namespace display {
 
         DisplayObject();
 
-        virtual ~DisplayObject() {};
+        virtual ~DisplayObject();
 
         void setX(float value) { _spatial().x = value; }
         float x() const { return _spatial().x; }

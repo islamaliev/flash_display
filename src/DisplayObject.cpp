@@ -17,7 +17,13 @@ DisplayObject::DisplayObject() {
     m_index = components.createEntity();
 }
 
+DisplayObject::~DisplayObject() {
+    components.removeEntity(m_index);
+}
+
 void DisplayObject::draw(Context& context, RenderState& renderState) {
+    DisplayObject::_updateOrderIndex(renderState.orderIndex);
+
     // TODO: ugly stuff
     if (!dynamic_cast<Image*>(this)) {
         context.unsetTexture();
