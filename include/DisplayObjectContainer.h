@@ -25,7 +25,7 @@ namespace display {
                     _moveChildTo(child, index);
                     return;
                 }
-                // TODO: optimize to that when child is moved depth and tree size are calculated only once
+                // TODO: optimize so that when child is moved depth and tree size are calculated only once
                 parent->removeChild(child);
             }
             m_children.insert(m_children.begin() + index, child);
@@ -51,7 +51,6 @@ namespace display {
         }
 
         void removeChildren() {
-            DisplayObject::_resetDepth();
             _alterTreeSizeBy(1 - treeSize());
             for (auto& child : m_children) {
                 child->_resetDepth();
