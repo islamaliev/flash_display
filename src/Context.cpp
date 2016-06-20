@@ -246,16 +246,22 @@ void Context::start(flash::display::DisplayObject& stage) {
 
         Marker matricesMarker = _frameAllocator.getMarker();
 
-        components.forEach([parentMatrices](SpatialComponent& spatial, int depth) {
-            if (!depth)
+        int lastDepth = 1;
+        Mat4* lastMatrix = nullptr;
+
+        components.forEach([parentMatrices, &lastDepth, &lastMatrix](SpatialComponent& spatial, int depth) {
+            if (depth <= 0)
                 return;
-            Mat4* m = (Mat4*) _frameAllocator.alloc(sizeof(Mat4));
+            bool toOverride = lastDepth == depth - 1;
+            Mat4* m = toOverride ? lastMatrix : (Mat4*) _frameAllocator.alloc(sizeof(Mat4));
             *m = Mat4();
             float xt = spatial.x - spatial.pivotX * spatial.scaleX;
             float yt = spatial.y - spatial.pivotY * spatial.scaleY;
             m->translate(xt, yt, 0);
             m->scale(spatial.width, spatial.height, 0);
             *m = parentMatrices[depth] = parentMatrices[depth - 1] * *m;
+            lastDepth = depth;
+            lastMatrix = m;
         });
 
         auto matricesSize = _frameAllocator.getMarker() - matricesMarker;
