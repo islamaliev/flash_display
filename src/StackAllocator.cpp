@@ -17,7 +17,6 @@ StackAllocator::~StackAllocator() {
 void* StackAllocator::alloc(size_t size) {
     char* p = m_base + m_top;
     assert(p - m_base + size <= m_size);
-    memset(p, 0, size);
     m_top += size;
     return p;
 }
