@@ -243,8 +243,9 @@ void Context::start(flash::display::DisplayObject& stage) {
         ComponentContainer& components = stage._getComponents();
         components.sort();
 
-        Mat4* parentMatrices = (Mat4*) _frameAllocator.alloc(sizeof(Mat4) * MAX_TREE_DEPTH);
-        *parentMatrices = Mat4();
+        Mat4** const parentMatrices = (Mat4**) _frameAllocator.alloc(sizeof(Mat4*) * MAX_TREE_DEPTH);
+        parentMatrices[0] = (Mat4*) _frameAllocator.alloc(sizeof(Mat4));
+        *parentMatrices[0] = Mat4::IDENTITY;
 
         Marker matricesMarker = _frameAllocator.getMarker();
 
@@ -254,14 +255,19 @@ void Context::start(flash::display::DisplayObject& stage) {
         components.forEach([parentMatrices, &lastDepth, &lastMatrix](SpatialComponent& spatial, int depth) {
             if (depth <= 0)
                 return;
-            bool toOverride = lastDepth == depth - 1;
-            Mat4* m = toOverride ? lastMatrix : (Mat4*) _frameAllocator.alloc(sizeof(Mat4));
-            *m = Mat4();
+            static Mat4 temp;
+            // TODO: check assembly code, make sure conditional move is used
+            temp = Mat4();
             float xt = spatial.x - spatial.pivotX * spatial.scaleX;
             float yt = spatial.y - spatial.pivotY * spatial.scaleY;
-            m->translate(xt, yt, 0);
-            m->scale(spatial.width, spatial.height, 0);
-            *m = parentMatrices[depth] = parentMatrices[depth - 1] * *m;
+            temp.translate(xt, yt, 0);
+            temp.scale(spatial.width, spatial.height, 0);
+            temp = *parentMatrices[depth - 1] * temp;
+
+            bool toOverride = lastDepth == depth - 1;
+            Mat4* m = toOverride ? lastMatrix : (Mat4*) _frameAllocator.alloc(sizeof(Mat4));
+            parentMatrices[depth] = m;
+            *m = temp;
             lastDepth = depth;
             lastMatrix = m;
         });
