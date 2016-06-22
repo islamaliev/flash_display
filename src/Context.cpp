@@ -217,6 +217,8 @@ void Context::init(unsigned width, unsigned height) {
 void Context::start(flash::display::DisplayObject& stage) {
     glClearColor(0.1, 0.1, 0.1, 1);
     glClearDepth(1.0f);
+    int tex[5] = {0, 1, 2, 3, 4};
+    program.setUniform("u_textures", tex, 5);
 
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -270,11 +272,9 @@ void Context::start(flash::display::DisplayObject& stage) {
         if (_textures.size() > 0) {
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, _textures[0]);
-            program.setUniform("u_texture0", 0);
             if (_textures.size() > 1) {
                 glActiveTexture(GL_TEXTURE1);
                 glBindTexture(GL_TEXTURE_2D, _textures[1]);
-                program.setUniform("u_texture1", 1);
             }
         }
 

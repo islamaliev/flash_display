@@ -94,8 +94,7 @@ void Program::init() {
     const std::string& fragShaderCode = R"shaderCode(
         #version 330 core
 
-        uniform sampler2D u_texture0;
-        uniform sampler2D u_texture1;
+        uniform sampler2D u_textures[16];
         out vec4 color;
 
         in Fragment {
@@ -106,12 +105,8 @@ void Program::init() {
         void main() {
             if (fragment.u_textureIndex == -1) {
                 color = vec4(1, 0, 0, 1);
-            } else if (fragment.u_textureIndex == 0) {
-                color = texture(u_texture0, fragment.tc);
-            } else if (fragment.u_textureIndex == 1) {
-                color = texture(u_texture1, fragment.tc);
             } else {
-                color = vec4(1, 1, 1, 1);
+                color = texture(u_textures[int(fragment.u_textureIndex)], fragment.tc);
             }
         })shaderCode";
 
@@ -143,4 +138,9 @@ void Program::setUniform(const char* name, const flash::math::Mat4& matrix) {
 void Program::setUniform(const char* name, int val) {
     const GLint location = glGetUniformLocation(program, name);
     glUniform1i(location, val);
+}
+
+void Program::setUniform(const char* name, int* val, int count) {
+    const GLint location = glGetUniformLocation(program, name);
+    glUniform1iv(location, count, val);
 }

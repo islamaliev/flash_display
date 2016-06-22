@@ -23,6 +23,8 @@ namespace render {
         void setUniform(const char* name, const flash::math::Mat4& matrix);
 
         void setUniform(const char* name, int val);
+
+        void setUniform(const char* name, int* val, int count);
     };
 
 }
