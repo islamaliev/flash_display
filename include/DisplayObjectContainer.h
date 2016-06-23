@@ -12,6 +12,11 @@ namespace display {
     public:
         DisplayObjectContainer();
 
+        ~DisplayObjectContainer() {
+            // TODO: set all nested method to noexcept
+            removeChildren();
+        }
+
         std::size_t numChildren() const { return m_children.size(); }
 
         void addChild(DisplayObject* child) {
@@ -35,7 +40,9 @@ namespace display {
         }
 
         void removeChild(DisplayObject* child) {
-            _removeChildAt(std::find(m_children.begin(), m_children.end(), child));
+            auto i = std::find(m_children.begin(), m_children.end(), child);
+            bool end = i == m_children.end();
+            _removeChildAt(i);
         }
 
         DisplayObject* removeChildAt(std::size_t index) {

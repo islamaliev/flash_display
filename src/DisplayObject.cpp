@@ -18,6 +18,9 @@ DisplayObject::DisplayObject() {
 }
 
 DisplayObject::~DisplayObject() {
+    // TODO: set all nested method to noexcept
+    if (m_parent)
+        m_parent->removeChild(this);
     components.removeEntity(m_index);
 }
 
