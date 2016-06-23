@@ -7,7 +7,7 @@ namespace allocator {
 
     class StackAllocator {
     public:
-        using Marker = size_t;
+        using Marker = unsigned;
 
         explicit StackAllocator(size_t);
 

@@ -27,20 +27,6 @@ namespace {
     std::vector<unsigned> _textures;
     StackAllocator _frameAllocator = StackAllocator(10000);
 
-    void _init() {
-        _textures = {};
-        int sizeToReserve;
-        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &sizeToReserve);
-        _textures.reserve((unsigned long) sizeToReserve);
-    }
-
-    void _clear() {
-        _frameAllocator.clear();
-        _textures.clear();
-    }
-}
-
-namespace {
     GLuint _vao = 0;
 
     float _points[] = {
@@ -55,7 +41,26 @@ namespace {
             3, 0, 2
     };
 
+    struct BufferData {
+        void* matrices;
+        void* textures;
+        unsigned matricesSize;
+        unsigned textuersSize;
+    };
+
     int _firstTexture = -1;
+
+    void _init() {
+        _textures = {};
+        int sizeToReserve;
+        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &sizeToReserve);
+        _textures.reserve((unsigned long) sizeToReserve);
+    }
+
+    void _clear() {
+        _frameAllocator.clear();
+        _textures.clear();
+    }
 
     void _initVAO() {
         glGenVertexArrays(1, &_vao);
@@ -65,6 +70,57 @@ namespace {
         glGenBuffers(1, &indicesBuffer);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(_indecies), _indecies, GL_STATIC_DRAW);
+    }
+
+    void _draw(BufferData& bufData) {
+        glBindVertexArray(_vao);
+        if (_textures.size() > 0) {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, _textures[0]);
+            if (_textures.size() > 1) {
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, _textures[1]);
+            }
+        }
+
+        glBindVertexArray(_vao);
+
+        auto pointsSize = sizeof(_points);
+
+        GLuint vertexBuffer = 0;
+        glGenBuffers(1, &vertexBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        glBufferData(GL_ARRAY_BUFFER, pointsSize + bufData.textuersSize + bufData.matricesSize, NULL, GL_STATIC_DRAW);
+
+        unsigned offset = 0;
+        glBufferSubData(GL_ARRAY_BUFFER, offset, pointsSize, _points);
+        offset += pointsSize;
+        glBufferSubData(GL_ARRAY_BUFFER, offset, bufData.textuersSize, bufData.textures);
+        offset += bufData.textuersSize;
+        glBufferSubData(GL_ARRAY_BUFFER, offset,  bufData.matricesSize, bufData.matrices);
+
+        auto matRowSize = 4 * sizeof(float);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, (void*) pointsSize);
+        glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.textuersSize + 0 * matRowSize));
+        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.textuersSize + 1 * matRowSize));
+        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.textuersSize + 2 * matRowSize));
+        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.textuersSize + 3 * matRowSize));
+
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(3);
+        glEnableVertexAttribArray(4);
+        glEnableVertexAttribArray(5);
+        glVertexAttribDivisor(1, 1);
+        glVertexAttribDivisor(2, 1);
+        glVertexAttribDivisor(3, 1);
+        glVertexAttribDivisor(4, 1);
+        glVertexAttribDivisor(5, 1);
+
+        program.activate(nullptr);
+        glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr, (GLsizei) (bufData.matricesSize / sizeof(Mat4)));
     }
 }
 
@@ -233,12 +289,15 @@ void Context::start(flash::display::DisplayObject& stage) {
 
         _clear();
 
+        BufferData bufData;
+
         Marker textureIndicesMarker = _frameAllocator.getMarker();
 
         RenderState renderState;
         stage.draw(*this, renderState);
 
-        auto useTexturesSize = _frameAllocator.getMarker() - textureIndicesMarker;
+        bufData.textures = _frameAllocator.getPointer(textureIndicesMarker);
+        bufData.textuersSize = _frameAllocator.getMarker() - textureIndicesMarker;
 
         ComponentContainer& components = stage._getComponents();
         components.sort();
@@ -256,7 +315,6 @@ void Context::start(flash::display::DisplayObject& stage) {
             if (depth <= 0)
                 return;
             static Mat4 temp;
-            // TODO: check assembly code, make sure conditional move is used
             temp = Mat4();
             float xt = spatial.x - spatial.pivotX * spatial.scaleX;
             float yt = spatial.y - spatial.pivotY * spatial.scaleY;
@@ -265,6 +323,7 @@ void Context::start(flash::display::DisplayObject& stage) {
             temp = *parentMatrices[depth - 1] * temp;
 
             bool toOverride = lastDepth == depth - 1;
+            // TODO: check assembly code, make sure conditional move is used
             Mat4* m = toOverride ? lastMatrix : (Mat4*) _frameAllocator.alloc(sizeof(Mat4));
             parentMatrices[depth] = m;
             *m = temp;
@@ -272,56 +331,10 @@ void Context::start(flash::display::DisplayObject& stage) {
             lastMatrix = m;
         });
 
-        auto matricesSize = _frameAllocator.getMarker() - matricesMarker;
+        bufData.matrices = _frameAllocator.getPointer(matricesMarker);
+        bufData.matricesSize = _frameAllocator.getMarker() - matricesMarker;
 
-        glBindVertexArray(_vao);
-        if (_textures.size() > 0) {
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, _textures[0]);
-            if (_textures.size() > 1) {
-                glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, _textures[1]);
-            }
-        }
-
-        glBindVertexArray(_vao);
-
-        auto pointsSize = sizeof(_points);
-
-        GLuint vertexBuffer = 0;
-        glGenBuffers(1, &vertexBuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-        glBufferData(GL_ARRAY_BUFFER, pointsSize + useTexturesSize + matricesSize, NULL, GL_STATIC_DRAW);
-
-        unsigned offset = 0;
-        glBufferSubData(GL_ARRAY_BUFFER, offset, pointsSize, _points);
-        offset += pointsSize;
-        glBufferSubData(GL_ARRAY_BUFFER, offset, useTexturesSize, _frameAllocator.getPointer(textureIndicesMarker));
-        offset += useTexturesSize;
-        glBufferSubData(GL_ARRAY_BUFFER, offset,  matricesSize, _frameAllocator.getPointer(matricesMarker));
-
-        auto matRowSize = 4 * sizeof(float);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, (void*) pointsSize);
-        glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + useTexturesSize + 0 * matRowSize));
-        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + useTexturesSize + 1 * matRowSize));
-        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + useTexturesSize + 2 * matRowSize));
-        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + useTexturesSize + 3 * matRowSize));
-
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-        glEnableVertexAttribArray(2);
-        glEnableVertexAttribArray(3);
-        glEnableVertexAttribArray(4);
-        glEnableVertexAttribArray(5);
-        glVertexAttribDivisor(1, 1);
-        glVertexAttribDivisor(2, 1);
-        glVertexAttribDivisor(3, 1);
-        glVertexAttribDivisor(4, 1);
-        glVertexAttribDivisor(5, 1);
-
-        program.activate(nullptr);
-        glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr, (GLsizei) (matricesSize / sizeof(Mat4)));
+        _draw(bufData);
 
         glfwPollEvents();
 
