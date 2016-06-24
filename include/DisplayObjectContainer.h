@@ -40,9 +40,7 @@ namespace display {
         }
 
         void removeChild(DisplayObject* child) {
-            auto i = std::find(m_children.begin(), m_children.end(), child);
-            bool end = i == m_children.end();
-            _removeChildAt(i);
+            _removeChildAt(std::find(m_children.begin(), m_children.end(), child));
         }
 
         DisplayObject* removeChildAt(std::size_t index) {

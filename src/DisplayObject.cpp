@@ -54,7 +54,7 @@ Mat4 DisplayObject::getTransform(DisplayObjectContainer* targetSpace) const {
 
     while (currentParent && currentParent != targetSpace) {
         const Mat4& mat4 = currentParent->getTransform();
-        m.multiplyByMatrix(mat4);
+        m = mat4 * m;
         currentParent = currentParent->getParent();
     }
     return m;
