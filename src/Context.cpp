@@ -15,6 +15,10 @@ using Texture = flash::display::Texture;
 using Mat4 = flash::math::Mat4;
 using StackAllocator = flash::allocator::StackAllocator;
 using Marker = StackAllocator::Marker;
+using DisplayObject = flash::display::DisplayObject;
+
+using namespace flash;
+using namespace render;
 
 #define MAX_TREE_DEPTH 50
 
@@ -39,13 +43,6 @@ namespace {
     GLuint _indecies[] = {
             0, 1, 2,
             3, 0, 2
-    };
-
-    struct BufferData {
-        void* matrices;
-        void* textures;
-        unsigned matricesSize;
-        unsigned textuersSize;
     };
 
     int _firstTexture = -1;
@@ -90,22 +87,22 @@ namespace {
         GLuint vertexBuffer = 0;
         glGenBuffers(1, &vertexBuffer);
         glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-        glBufferData(GL_ARRAY_BUFFER, pointsSize + bufData.textuersSize + bufData.matricesSize, NULL, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, pointsSize + bufData.texturesSize + bufData.matricesSize, NULL, GL_STATIC_DRAW);
 
         unsigned offset = 0;
         glBufferSubData(GL_ARRAY_BUFFER, offset, pointsSize, _points);
         offset += pointsSize;
-        glBufferSubData(GL_ARRAY_BUFFER, offset, bufData.textuersSize, bufData.textures);
-        offset += bufData.textuersSize;
+        glBufferSubData(GL_ARRAY_BUFFER, offset, bufData.texturesSize, bufData.textures);
+        offset += bufData.texturesSize;
         glBufferSubData(GL_ARRAY_BUFFER, offset,  bufData.matricesSize, bufData.matrices);
 
         auto matRowSize = 4 * sizeof(float);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
         glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, (void*) pointsSize);
-        glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.textuersSize + 0 * matRowSize));
-        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.textuersSize + 1 * matRowSize));
-        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.textuersSize + 2 * matRowSize));
-        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.textuersSize + 3 * matRowSize));
+        glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.texturesSize + 0 * matRowSize));
+        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.texturesSize + 1 * matRowSize));
+        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.texturesSize + 2 * matRowSize));
+        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.texturesSize + 3 * matRowSize));
 
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
@@ -223,10 +220,6 @@ namespace {
 }
 #endif
 
-
-using namespace flash;
-using namespace render;
-
 void Context::init(unsigned width, unsigned height) {
     if (!glfwInit()) {
         fprintf(stderr, "ERROR: could not start GLFW3\n");
@@ -270,7 +263,7 @@ void Context::init(unsigned width, unsigned height) {
     program.activate(nullptr);
 }
 
-void Context::start(flash::display::DisplayObject& stage) {
+void Context::start(DisplayObject& stage) {
     glClearColor(0.1, 0.1, 0.1, 1);
     glClearDepth(1.0f);
     int tex[5] = {0, 1, 2, 3, 4};
@@ -297,42 +290,9 @@ void Context::start(flash::display::DisplayObject& stage) {
         stage.draw(*this, renderState);
 
         bufData.textures = _frameAllocator.getPointer(textureIndicesMarker);
-        bufData.textuersSize = _frameAllocator.getMarker() - textureIndicesMarker;
+        bufData.texturesSize = _frameAllocator.getMarker() - textureIndicesMarker;
 
-        ComponentContainer& components = stage._getComponents();
-        components.sort();
-
-        Mat4** const parentMatrices = (Mat4**) _frameAllocator.alloc(sizeof(Mat4*) * MAX_TREE_DEPTH);
-        parentMatrices[0] = (Mat4*) _frameAllocator.alloc(sizeof(Mat4));
-        *parentMatrices[0] = Mat4::IDENTITY;
-
-        Marker matricesMarker = _frameAllocator.getMarker();
-
-        int lastDepth = 1;
-        Mat4* lastMatrix = nullptr;
-
-        components.forEach([parentMatrices, &lastDepth, &lastMatrix](SpatialComponent& spatial, int depth) {
-            if (depth <= 0)
-                return;
-            static Mat4 temp;
-            temp = Mat4();
-            float xt = spatial.x - spatial.pivotX * spatial.scaleX;
-            float yt = spatial.y - spatial.pivotY * spatial.scaleY;
-            temp.translate(xt, yt, 0);
-            temp.scale(spatial.width, spatial.height, 0);
-            temp = *parentMatrices[depth - 1] * temp;
-
-            bool toOverride = lastDepth == depth - 1;
-            // TODO: check assembly code, make sure conditional move is used
-            Mat4* m = toOverride ? lastMatrix : (Mat4*) _frameAllocator.alloc(sizeof(Mat4));
-            parentMatrices[depth] = m;
-            *m = temp;
-            lastDepth = depth;
-            lastMatrix = m;
-        });
-
-        bufData.matrices = _frameAllocator.getPointer(matricesMarker);
-        bufData.matricesSize = _frameAllocator.getMarker() - matricesMarker;
+        TransformationsBufferOrganizer::organize(stage, _frameAllocator, bufData);
 
         _draw(bufData);
 
@@ -378,4 +338,41 @@ void Context::setTexture(Texture* texture) {
 void Context::unsetTexture() {
     TextureIndexType* texInd = (TextureIndexType*) _frameAllocator.alloc(sizeof(TextureIndexType));
     *texInd = -1;
+}
+
+void Context::TransformationsBufferOrganizer::organize(DisplayObject& stage, StackAllocator& allocator, BufferData& bufData) {
+    ComponentContainer& components = stage._getComponents();
+    components.sort();
+
+    Mat4** const parentMatrices = (Mat4**) allocator.alloc(sizeof(Mat4*) * MAX_TREE_DEPTH);
+    parentMatrices[0] = (Mat4*) allocator.alloc(sizeof(Mat4));
+    *parentMatrices[0] = Mat4::IDENTITY;
+
+    Marker matricesMarker = allocator.getMarker();
+
+    int lastDepth = 1;
+    Mat4* lastMatrix = nullptr;
+
+    components.forEach([parentMatrices, &lastDepth, &lastMatrix, &allocator](SpatialComponent& spatial, int depth) {
+        if (depth <= 0)
+            return;
+        static Mat4 temp;
+        temp = Mat4::IDENTITY;
+        float xt = spatial.x - spatial.pivotX * spatial.scaleX;
+        float yt = spatial.y - spatial.pivotY * spatial.scaleY;
+        temp.translate(xt, yt, 0);
+        temp.scale(spatial.width, spatial.height, 0);
+        temp = *parentMatrices[depth - 1] * temp;
+
+        bool toOverride = lastDepth == depth - 1;
+        // TODO: check assembly code, make sure conditional move is used
+        Mat4* m = toOverride ? lastMatrix : (Mat4*) allocator.alloc(sizeof(Mat4));
+        parentMatrices[depth] = m;
+        *m = temp;
+        lastDepth = depth;
+        lastMatrix = m;
+    });
+
+    bufData.matrices = allocator.getPointer(matricesMarker);
+    bufData.matricesSize = allocator.getMarker() - matricesMarker;
 }

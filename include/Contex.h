@@ -11,9 +11,27 @@ namespace math {
     class Mat4;
 }
 
+namespace allocator {
+    class StackAllocator;
+}
+
+class ComponentContainer;
+
 namespace render {
+    struct BufferData {
+        void* matrices;
+        void* textures;
+        unsigned matricesSize;
+        unsigned texturesSize;
+    };
+
     class Context {
     public:
+        class TransformationsBufferOrganizer {
+        public:
+            static void organize(display::DisplayObject& stage, allocator::StackAllocator&, BufferData&);
+        };
+
         void init(unsigned width, unsigned height);
 
         void start(display::DisplayObject& displayObject);
@@ -28,7 +46,6 @@ namespace render {
 
         void unsetTexture();
     };
-
 }
 
 }
