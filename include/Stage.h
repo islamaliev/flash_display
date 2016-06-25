@@ -18,6 +18,8 @@ namespace display {
             int i = 0;
             _updateOrderIndex(i);
         }
+
+        void init();
     };
 
 }
