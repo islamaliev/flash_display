@@ -25,7 +25,8 @@ const Entity& ComponentContainer::createEntity() {
     new (&m_depths[m_nextIndex]) int(-1);
     new (&m_backIndexes[m_nextIndex]) int(entityIndex);
     new (&m_order[entityIndex]) int(-1);
-    m_dataIndexes[entityIndex] = m_nextIndex++;
+    m_dataIndexes[entityIndex] = m_nextIndex;
+    ++m_nextIndex;
     entity = entityIndex;
     return entity;
 }

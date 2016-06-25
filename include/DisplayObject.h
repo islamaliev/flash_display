@@ -102,6 +102,8 @@ namespace display {
         float _getActualHeight() { return m_actualHeight; }
 
     private:
+        static ComponentContainer* s_components;
+
         virtual void _resetDepth() { _setDepth(-1); };
 
         virtual void _updateDepth(int parentDepth) { _setDepth(parentDepth != -1 ? parentDepth + 1 : -1); };

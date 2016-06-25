@@ -9,19 +9,18 @@ using namespace flash::render;
 
 using Mat4 = flash::math::Mat4;
 
-namespace {
-    flash::ComponentContainer components = flash::ComponentContainer(1000);
-}
+// TODO: make it configurable
+flash::ComponentContainer* DisplayObject::s_components = new flash::ComponentContainer(500000);
 
 DisplayObject::DisplayObject() {
-    m_index = components.createEntity();
+    m_index = s_components->createEntity();
 }
 
 DisplayObject::~DisplayObject() {
     // TODO: set all nested method to noexcept
     if (m_parent)
         m_parent->removeChild(this);
-    components.removeEntity(m_index);
+    s_components->removeEntity(m_index);
 }
 
 void DisplayObject::draw(Context& context, RenderState& renderState) {
@@ -79,19 +78,19 @@ void DisplayObject::setScaleY(float value) {
 }
 
 const flash::SpatialComponent& DisplayObject::_spatial() const {
-    return components.getSpatialComponent(m_index);
+    return s_components->getSpatialComponent(m_index);
 }
 
 int DisplayObject::depth() const {
-    return components.getDepthComponent(m_index);
+    return s_components->getDepthComponent(m_index);
 }
 
 int DisplayObject::orderIndex() const {
-    return components.getOrderComponent(m_index);
+    return s_components->getOrderComponent(m_index);
 }
 
 void DisplayObject::_setDepth(int value) {
-    components.getDepthComponent(m_index) = value;
+    s_components->getDepthComponent(m_index) = value;
 }
 
 void DisplayObject::_alterTreeSizeBy(int value) {
@@ -101,9 +100,9 @@ void DisplayObject::_alterTreeSizeBy(int value) {
 }
 
 void DisplayObject::_updateOrderIndex(int& orderIndex) {
-    components.getOrderComponent(m_index) = orderIndex;
+    s_components->getOrderComponent(m_index) = orderIndex;
 }
 
 flash::ComponentContainer& DisplayObject::_getComponents() {
-    return components;
+    return *s_components;
 }

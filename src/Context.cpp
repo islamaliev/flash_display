@@ -20,7 +20,7 @@ using DisplayObject = flash::display::DisplayObject;
 using namespace flash;
 using namespace render;
 
-#define MAX_TREE_DEPTH 50
+#define MAX_TREE_DEPTH 100
 
 namespace {
     Program program;
@@ -29,7 +29,7 @@ namespace {
     using TextureIndexType = float;
 
     std::vector<unsigned> _textures;
-    StackAllocator _frameAllocator = StackAllocator(10000);
+    StackAllocator _frameAllocator = StackAllocator(8000000);
 
     GLuint _vao = 0;
 
@@ -246,10 +246,10 @@ void Context::init(unsigned width, unsigned height) {
     glfwHideWindow(window);
     prepareOffscreenBuffer();
 #else
-    const GLubyte* renderer = glGetString(GL_RENDERER);
-    const GLubyte* version = glGetString(GL_VERSION);
-    printf("Renderer: %s\n", renderer);
-    printf("OpenGL version supported %s\n", version);
+//    const GLubyte* renderer = glGetString(GL_RENDERER);
+//    const GLubyte* version = glGetString(GL_VERSION);
+//    printf("Renderer: %s\n", renderer);
+//    printf("OpenGL version supported %s\n", version);
     glReadBuffer(GL_BACK);
 #endif
 
@@ -261,14 +261,14 @@ void Context::init(unsigned width, unsigned height) {
 
     program.init();
     program.activate(nullptr);
-}
 
-void Context::start(DisplayObject& stage) {
     glClearColor(0.1, 0.1, 0.1, 1);
     glClearDepth(1.0f);
     int tex[5] = {0, 1, 2, 3, 4};
     program.setUniform("u_textures", tex, 5);
+}
 
+void Context::start(DisplayObject& stage) {
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -344,6 +344,7 @@ void Context::TransformationsBufferOrganizer::organize(DisplayObject& stage, Sta
     ComponentContainer& components = stage._getComponents();
     components.sort();
 
+    // TODO: find a way to get rid of this MAX_TREE_DEPTH
     Mat4* parentMatrices = (Mat4*) allocator.alloc(sizeof(Mat4) * MAX_TREE_DEPTH);
     *parentMatrices = Mat4();
 
