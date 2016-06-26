@@ -23,7 +23,7 @@ namespace display {
             addChildAt(child, m_children.size());
         }
 
-        void addChildAt(DisplayObject* child, std::size_t index);
+        void addChildAt(DisplayObject* child, unsigned index);
 
         void removeChild(DisplayObject* child) {
             _removeChildAt(std::find(m_children.cbegin(), m_children.cend(), child));
@@ -53,7 +53,7 @@ namespace display {
             return std::find(m_children.cbegin(), end, child) != end;
         }
 
-        void draw(flash::render::Context&, flash::render::RenderState&) override;
+        void preRender(flash::render::RenderState&) override;
 
         Rectangle getBounds(DisplayObject* targetSpace) const override;
 
@@ -64,13 +64,13 @@ namespace display {
     private:
         void _resetDepth() override;
 
-        void _updateDepth(int parentDepth) override;
+        void _resetOrderIndex() override;
 
-        void _updateOrderIndex(int& orderIndex) override;
+        void _updateDepth(int parentDepth) override;
 
         DisplayObject* _removeChildAt(std::vector<DisplayObject*>::const_iterator it);
 
-        void _moveChildTo(DisplayObject* child, int index);
+        void _moveChildTo(DisplayObject* child, unsigned index);
 
         std::vector<DisplayObject*> m_children;
 

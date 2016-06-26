@@ -16,7 +16,7 @@ DisplayObjectContainer::DisplayObjectContainer()
     _setHeight(1);
 }
 
-void DisplayObjectContainer::addChildAt(DisplayObject* child, std::size_t index) {
+void DisplayObjectContainer::addChildAt(DisplayObject* child, unsigned index) {
     DisplayObjectContainer* parent = child->getParent();
     if (parent) {
         if (parent == this) {
@@ -48,18 +48,18 @@ void DisplayObjectContainer::_resetDepth() {
     }
 }
 
+void DisplayObjectContainer::_resetOrderIndex() {
+    DisplayObject::_resetOrderIndex();
+    for (auto& child : m_children) {
+        child->_resetOrderIndex();
+    }
+}
+
 void DisplayObjectContainer::_updateDepth(int parentDepth) {
     DisplayObject::_updateDepth(parentDepth);
     int d = depth();
     for (auto& child : m_children) {
         child->_updateDepth(d);
-    }
-}
-
-void DisplayObjectContainer::_updateOrderIndex(int& orderIndex) {
-    DisplayObject::_updateOrderIndex(orderIndex);
-    for (auto& child : m_children) {
-        child->_updateOrderIndex(++orderIndex);
     }
 }
 
@@ -72,7 +72,7 @@ DisplayObject* DisplayObjectContainer::_removeChildAt(std::vector<DisplayObject*
     return child;
 }
 
-void DisplayObjectContainer::_moveChildTo(DisplayObject* child, int index) {
+void DisplayObjectContainer::_moveChildTo(DisplayObject* child, unsigned index) {
     const auto& newIndex = m_children.begin() + index;
     if (child == *newIndex || (index > 0 && child == *(newIndex - 1))) {
         return;
@@ -85,11 +85,16 @@ void DisplayObjectContainer::_moveChildTo(DisplayObject* child, int index) {
     std::rotate(firstIt, newFirstIt, lastIt);
 }
 
-void DisplayObjectContainer::draw(Context& context, RenderState& renderState) {
-    DisplayObject::_updateOrderIndex(renderState.orderIndex);
-    for (auto child : m_children) {
-        ++renderState.orderIndex;
-        child->draw(context, renderState);
+void DisplayObjectContainer::preRender(flash::render::RenderState& renderState) {
+    if (m_visible) {
+        _setOrderIndex(renderState.orderIndex);
+        for (auto child : m_children) {
+            ++renderState.orderIndex;
+            child->preRender(renderState);
+        }
+    } else {
+        --renderState.orderIndex;
+        _resetOrderIndex();
     }
 }
 

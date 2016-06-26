@@ -13,7 +13,7 @@ namespace display {
     public:
         void setTexture(Texture* texture);
 
-        void draw(flash::render::Context&, flash::render::RenderState&) override;
+        void preRender(flash::render::RenderState&) override;
 
         void setWidth(float value) override;
 

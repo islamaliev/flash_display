@@ -287,7 +287,7 @@ void Context::start(DisplayObject& stage) {
         Marker textureIndicesMarker = _frameAllocator.getMarker();
 
         RenderState renderState;
-        stage.draw(*this, renderState);
+        stage.preRender(renderState);
 
         bufData.textures = _frameAllocator.getPointer(textureIndicesMarker);
         bufData.texturesSize = _frameAllocator.getMarker() - textureIndicesMarker;

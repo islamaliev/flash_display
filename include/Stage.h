@@ -14,11 +14,6 @@ namespace display {
 
         void stop();
 
-        void updateOrder() {
-            int i = 0;
-            _updateOrderIndex(i);
-        }
-
         void init();
     };
 

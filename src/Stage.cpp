@@ -11,7 +11,6 @@ using RenderState = flash::render::RenderState;
 using Mat4 = flash::math::Mat4;
 
 namespace {
-    Context context;
     bool _isInitialized{false};
     bool _isStarted{false};
 }
@@ -26,21 +25,21 @@ void Stage::start() {
     if (!_isStarted) {
         _isStarted = true;
         init();
-        context.start(*this);
+        s_context->start(*this);
     }
 }
 
 void Stage::stop() {
     if (_isStarted) {
         _isStarted = _isInitialized = false;
-        context.stop();
+        s_context->stop();
     }
 }
 
 void Stage::init() {
     if (!_isInitialized) {
         _isInitialized = true;
-        context.init((unsigned) width(), (unsigned) height());
-        context.setProjection(Mat4::orthographicProjection(0, width(), 0, height(), -1, 20));
+        s_context->init((unsigned) width(), (unsigned) height());
+        s_context->setProjection(Mat4::orthographicProjection(0, width(), 0, height(), -1, 20));
     }
 }

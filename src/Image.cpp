@@ -4,11 +4,11 @@
 
 using namespace flash::display;
 
-void Image::draw(flash::render::Context& context, flash::render::RenderState& renderState) {
+void Image::preRender(flash::render::RenderState& renderState) {
     if (m_texture) {
-        context.setTexture(m_texture);
+        s_context->setTexture(m_texture);
     }
-    DisplayObject::draw(context, renderState);
+    DisplayObject::preRender(renderState);
 }
 
 void Image::setTexture(Texture* texture) {

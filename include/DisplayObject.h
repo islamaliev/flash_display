@@ -60,7 +60,7 @@ namespace display {
             return Rectangle(0, 0, _spatial().width, _spatial().height);
         }
 
-        virtual void draw(flash::render::Context&, flash::render::RenderState&);
+        virtual void preRender(flash::render::RenderState&);
 
         flash::math::Mat4 getTransform() const;
 
@@ -81,6 +81,8 @@ namespace display {
         int orderIndex() const;
 
     protected:
+        static render::Context* s_context;
+
         void setActualWidth(float value) {
             SpatialComponent& comp = _spatial();
             m_actualWidth = value;
@@ -104,15 +106,17 @@ namespace display {
     private:
         static ComponentContainer* s_components;
 
-        virtual void _resetDepth() { _setDepth(-1); };
+        virtual void _resetDepth() { _setDepth(-1); }
 
-        virtual void _updateDepth(int parentDepth) { _setDepth(parentDepth != -1 ? parentDepth + 1 : -1); };
+        virtual void _resetOrderIndex() { _setOrderIndex(-1); }
 
-        virtual void _updateOrderIndex(int& orderIndex);
+        virtual void _updateDepth(int parentDepth) { _setDepth(parentDepth != -1 ? parentDepth + 1 : -1); }
 
         void _setParent(DisplayObjectContainer* parent) { m_parent = parent; }
 
         void _setDepth(int value);
+
+        void _setOrderIndex(int value);
 
         void _setTreeSize(int value) { m_treeSize = value; }
 
@@ -134,7 +138,7 @@ namespace display {
 
         friend class DisplayObjectContainer;
         friend class Stage;
-        friend class flash::render::Context;
+        friend class render::Context;
     };
 
 }
