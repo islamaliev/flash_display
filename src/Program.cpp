@@ -22,9 +22,10 @@ namespace {
         glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
         glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
         if ( InfoLogLength > 0 ) {
-            char ProgramErrorMessage[InfoLogLength+1];
-            glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
+            char *ProgramErrorMessage = new char[InfoLogLength+1];
+            glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, ProgramErrorMessage);
             printf("%s\n", &ProgramErrorMessage[0]);
+            delete[] ProgramErrorMessage;
         }
     }
 
@@ -38,9 +39,10 @@ namespace {
         glGetShaderiv(shaderID, GL_COMPILE_STATUS, &Result);
         glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
         if (InfoLogLength > 0 ) {
-            char VertexShaderErrorMessage[InfoLogLength+1];
-            glGetShaderInfoLog(shaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
+            char *VertexShaderErrorMessage = new char[InfoLogLength+1];
+            glGetShaderInfoLog(shaderID, InfoLogLength, NULL, VertexShaderErrorMessage);
             printf("%s\n", &VertexShaderErrorMessage[0]);
+            delete[] VertexShaderErrorMessage;
         }
     }
 

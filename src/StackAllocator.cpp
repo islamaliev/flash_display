@@ -1,5 +1,6 @@
 #include <cstring>
 #include <cassert>
+#include <cstdlib>
 #include "StackAllocator.h"
 
 using namespace flash::allocator;
