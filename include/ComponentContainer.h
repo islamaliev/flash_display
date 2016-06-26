@@ -48,6 +48,7 @@ namespace flash {
 
     private:
         unsigned m_nextIndex{1};
+        unsigned m_negativeOrdersNum{0};
 
         std::vector<SpatialComponent> m_comps;
         std::vector<int> m_depths;

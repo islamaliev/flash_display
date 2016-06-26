@@ -56,7 +56,8 @@ int& ComponentContainer::getOrderComponent(Entity e) {
 }
 
 void ComponentContainer::forEach(std::function<void(SpatialComponent&, int)> f) {
-    for (int i = 1; i < m_nextIndex; ++i) {
+    unsigned end = m_nextIndex - m_negativeOrdersNum;
+    for (int i = 1; i < end; ++i) {
         f(m_comps[i], m_depths[i]);
     }
 }
@@ -65,6 +66,7 @@ void ComponentContainer::sort() {
     using std::swap;
     unsigned i = 0;
     unsigned count = 1;
+    m_negativeOrdersNum = 0;
     while (count < m_nextIndex) {
         ++i;
         if (m_dataIndexes[i] == 0) {
@@ -72,6 +74,7 @@ void ComponentContainer::sort() {
         } else {
             int dataIndex = m_dataIndexes[i];
             int orderIndex = m_order[i] + 1;
+            m_negativeOrdersNum += orderIndex == 0 ? 1 : 0;
             if (dataIndex != orderIndex && orderIndex != 0) {
                 int backIndex = m_backIndexes[orderIndex];
                 swap(m_comps[dataIndex], m_comps[orderIndex]);
