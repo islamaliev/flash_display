@@ -10,7 +10,6 @@
 #include "RenderState.h"
 #include "Texture.h"
 
-using Program = flash::render::Program;
 using Texture = flash::display::Texture;
 using Mat4 = flash::math::Mat4;
 using StackAllocator = flash::allocator::StackAllocator;
