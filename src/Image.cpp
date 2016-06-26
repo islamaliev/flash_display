@@ -5,7 +5,7 @@
 using namespace flash::display;
 
 void Image::preRender(flash::render::RenderState& renderState) {
-    if (m_texture) {
+    if (m_texture && visible()) {
         s_context->setTexture(m_texture);
     }
     DisplayObject::preRender(renderState);
