@@ -29,7 +29,7 @@ namespace {
     using TextureIndexType = float;
 
     std::vector<unsigned> _textures;
-    StackAllocator _frameAllocator = StackAllocator(8000000);
+    StackAllocator _frameAllocator = StackAllocator(4000000);
 
     GLuint _vao = 0;
 

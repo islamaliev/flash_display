@@ -10,7 +10,7 @@ using namespace flash::render;
 using Mat4 = flash::math::Mat4;
 
 // TODO: make it configurable
-flash::ComponentContainer* DisplayObject::s_components = new flash::ComponentContainer(500000);
+flash::ComponentContainer* DisplayObject::s_components = new flash::ComponentContainer(160000);
 
 DisplayObject::DisplayObject() {
     m_index = s_components->createEntity();
