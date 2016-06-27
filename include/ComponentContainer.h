@@ -49,7 +49,8 @@ namespace flash {
     private:
         unsigned m_nextIndex{1};
         unsigned m_negativeOrdersNum{0};
-
+        
+        // TODO: use one big memory buffer instead several vectors
         std::vector<SpatialComponent> m_comps;
         std::vector<int> m_depths;
         std::vector<int> m_backIndexes;
