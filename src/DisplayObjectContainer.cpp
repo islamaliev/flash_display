@@ -86,7 +86,7 @@ void DisplayObjectContainer::_moveChildTo(DisplayObject* child, unsigned index) 
 }
 
 void DisplayObjectContainer::preRender(flash::render::RenderState& renderState) {
-    if (m_visible) {
+    if (m_visible && m_children.size()) {
         _setOrderIndex(renderState.orderIndex);
         for (auto child : m_children) {
             ++renderState.orderIndex;
