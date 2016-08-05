@@ -23,6 +23,7 @@ const Entity& ComponentContainer::createEntity() {
     Entity& entity = m_entities[entityIndex];
     new (&m_comps[m_nextIndex]) SpatialComponent();
     new (&m_depths[m_nextIndex]) int(-1);
+    new (&m_textures[m_nextIndex]) TextureData();
     new (&m_backIndexes[m_nextIndex]) int(entityIndex);
     new (&m_order[entityIndex]) int(-1);
     m_dataIndexes[entityIndex] = m_nextIndex;
@@ -39,6 +40,7 @@ void ComponentContainer::removeEntity(const Entity& e) {
     int swapDataIndex = m_dataIndexes[swapIndex] = m_dataIndexes[e];
     m_comps[swapDataIndex] = m_comps[m_nextIndex];
     m_depths[swapDataIndex] = m_depths[m_nextIndex];
+    m_textures[swapDataIndex] = m_textures[m_nextIndex];
     m_backIndexes[swapDataIndex] = m_backIndexes[m_nextIndex];
     m_dataIndexes[e] = 0;
 }
@@ -49,6 +51,10 @@ SpatialComponent& ComponentContainer::getSpatialComponent(Entity e) {
 
 int& ComponentContainer::getDepthComponent(Entity e) {
     return m_depths[m_dataIndexes[e]];
+}
+
+TextureData& ComponentContainer::getTextureData(Entity e) {
+    return m_textures[m_dataIndexes[e]];
 }
 
 int& ComponentContainer::getOrderComponent(Entity e) {
@@ -79,6 +85,7 @@ void ComponentContainer::sort() {
                 int backIndex = m_backIndexes[orderIndex];
                 swap(m_comps[dataIndex], m_comps[orderIndex]);
                 swap(m_depths[dataIndex], m_depths[orderIndex]);
+                swap(m_textures[dataIndex], m_textures[orderIndex]);
                 swap(m_backIndexes[dataIndex], m_backIndexes[orderIndex]);
                 m_dataIndexes[i] = orderIndex;
                 m_dataIndexes[backIndex] = dataIndex;

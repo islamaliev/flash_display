@@ -98,6 +98,10 @@ void DisplayObject::_setDepth(int value) {
     s_components->getDepthComponent(m_index) = value;
 }
 
+void DisplayObject::_setTextureId(unsigned value) {
+    s_components->getTextureData(m_index).textureId = value;
+}
+
 void DisplayObject::_setOrderIndex(int value) {
     s_components->getOrderComponent(m_index) = value;
 }
