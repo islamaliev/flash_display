@@ -16,6 +16,7 @@ namespace render {
 namespace display {
 
     class DisplayObjectContainer;
+    class Shape;
 
     class DisplayObject {
     public:
@@ -60,7 +61,7 @@ namespace display {
             return Rectangle(0, 0, _spatial().width, _spatial().height);
         }
 
-        virtual void preRender(flash::render::RenderState&);
+        virtual void preRender(flash::render::RenderState&) = 0;
 
         flash::math::Mat4 getTransform() const;
 
@@ -138,6 +139,7 @@ namespace display {
 
         friend class DisplayObjectContainer;
         friend class Stage;
+        friend class Shape;
         friend class render::Context;
     };
 

@@ -27,10 +27,6 @@ DisplayObject::~DisplayObject() {
 void DisplayObject::preRender(flash::render::RenderState& renderState) {
     if (m_visible) {
         _setOrderIndex(renderState.orderIndex);
-        // TODO: ugly stuff
-        if (!dynamic_cast<Image*>(this)) {
-            s_context->unsetTexture();
-        }
     } else {
         --renderState.orderIndex;
         _setOrderIndex(-1);
