@@ -21,11 +21,17 @@ namespace flash {
         float pivotY{0};
     };
 
+    struct TextureData {
+        unsigned color{0};
+        unsigned textureId{0};
+    };
+
     class ComponentContainer {
     public:
         explicit ComponentContainer(unsigned size)
                 : m_comps(size + 1)
                 , m_depths(size + 1)
+                , m_textures(size + 1)
                 , m_backIndexes(size + 1)
                 , m_order(size + 1)
                 , m_entities(size + 1)
@@ -42,6 +48,8 @@ namespace flash {
 
         int& getDepthComponent(Entity);
 
+        TextureData& getTextureData(Entity);
+
         int& getOrderComponent(Entity);
 
         void sort();
@@ -53,6 +61,7 @@ namespace flash {
         // TODO: use one big memory buffer instead several vectors
         std::vector<SpatialComponent> m_comps;
         std::vector<int> m_depths;
+        std::vector<TextureData> m_textures;
         std::vector<int> m_backIndexes;
         std::vector<int> m_order;
         std::vector<Entity> m_entities;

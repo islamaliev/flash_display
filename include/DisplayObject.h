@@ -117,6 +117,8 @@ namespace display {
 
         void _setDepth(int value);
 
+        void _setTextureId(unsigned value);
+
         void _setOrderIndex(int value);
 
         void _setTreeSize(int value) { m_treeSize = value; }
