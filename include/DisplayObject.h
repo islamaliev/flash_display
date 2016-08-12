@@ -17,6 +17,7 @@ namespace display {
 
     class DisplayObjectContainer;
     class Shape;
+    class Image;
 
     class DisplayObject {
     public:
@@ -142,6 +143,7 @@ namespace display {
         friend class DisplayObjectContainer;
         friend class Stage;
         friend class Shape;
+        friend class Image;
         friend class render::Context;
     };
 

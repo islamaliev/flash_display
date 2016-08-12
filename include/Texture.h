@@ -19,9 +19,13 @@ namespace display {
         Texture& operator=(const Texture& other) = delete;
 
         Texture(Texture&& other) noexcept
-            : m_width(other.m_width)
+            : m_id(other.m_id)
+            , m_width(other.m_width)
             , m_height(other.m_height)
             , m_data(other.m_data) {
+            other.m_id = 0;
+            other.m_width = 0;
+            other.m_height = 0;
             other.m_data = nullptr;
         }
 

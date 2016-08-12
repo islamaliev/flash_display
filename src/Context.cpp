@@ -343,20 +343,51 @@ void Context::TransformationsBufferOrganizer::organize(DisplayObject& stage, Sta
     ComponentContainer& components = stage._getComponents();
     components.sort();
 
+    const int textureNum = 4;
+    int* texturesCount = (int*) allocator.alloc(sizeof(int) * textureNum);
+    for (int i = 0; i < textureNum; ++i)
+        texturesCount[i] = 0;
+
+    int lastDepth = 1;
+    int numLeafComponents = 0;
+
+    components.forEachTextureData([&numLeafComponents, texturesCount, &lastDepth](TextureData& textureData, int depth) {
+        if (depth <= 0)
+            return;
+        const int bitsInGroup = 1;
+        bool isLeaf = lastDepth != depth - 1;
+        lastDepth = depth;
+        numLeafComponents += isLeaf;
+        unsigned int groupIndex = textureData.textureId  >> bitsInGroup;
+        texturesCount[groupIndex] = texturesCount[groupIndex] + isLeaf;
+    });
+
+    int* texturesOffsets = (int*) allocator.alloc(sizeof(int) * textureNum);
+
+    texturesOffsets[0] = 0;
+    for (int i = 1; i < textureNum + 1; ++i) {
+        texturesOffsets[i] = texturesOffsets[i - 1] + texturesCount[i - 1];
+    }
+
     // TODO: find a way to get rid of this MAX_TREE_DEPTH
     Mat4* parentMatrices = (Mat4*) allocator.alloc(sizeof(Mat4) * MAX_TREE_DEPTH);
     *parentMatrices = Mat4();
 
-    Marker matricesMarker = allocator.getMarker();
+    Mat4* matrices = (Mat4*) allocator.alloc(sizeof(Mat4) * numLeafComponents);
 
-    int lastDepth = 1;
+    lastDepth = 1;
     Mat4* lastMatrix = nullptr;
 
-    components.forEach([parentMatrices, &lastDepth, &lastMatrix, &allocator](SpatialComponent& spatial, int depth) {
+    components.forEach2([parentMatrices, &lastDepth, &lastMatrix, matrices, texturesOffsets]
+            (SpatialComponent& spatial, TextureData& textureData, int depth) {
         if (depth <= 0)
             return;
-        bool toOverride = lastDepth == depth - 1;
-        Mat4* m = toOverride ? lastMatrix : (Mat4*) allocator.alloc(sizeof(Mat4));
+        const int bitsInGroup = 1;
+        int textureGroup = textureData.textureId >> bitsInGroup;
+        bool isLeaf = lastDepth != depth - 1;
+        // TODO: check if conditional move is used here
+        Mat4* m = isLeaf ? matrices + texturesOffsets[textureGroup] : lastMatrix;
+        texturesOffsets[textureGroup] = texturesOffsets[textureGroup] + isLeaf;
         *m = Mat4();
         float xt = spatial.x - spatial.pivotX * spatial.scaleX;
         float yt = spatial.y - spatial.pivotY * spatial.scaleY;
@@ -367,6 +398,6 @@ void Context::TransformationsBufferOrganizer::organize(DisplayObject& stage, Sta
         lastMatrix = m;
     });
 
-    bufData.matrices = allocator.getPointer(matricesMarker);
-    bufData.matricesSize = allocator.getMarker() - matricesMarker;
+    bufData.matrices = matrices;
+    bufData.matricesSize = sizeof(Mat4) * numLeafComponents;
 }

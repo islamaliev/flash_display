@@ -68,6 +68,20 @@ void ComponentContainer::forEach(std::function<void(SpatialComponent&, int)> f) 
     }
 }
 
+void ComponentContainer::forEach2(std::function<void(SpatialComponent&, TextureData&, int)> f) {
+    unsigned end = m_nextIndex - m_negativeOrdersNum;
+    for (int i = 1; i < end; ++i) {
+        f(m_comps[i], m_textures[i], m_depths[i]);
+    }
+}
+
+void ComponentContainer::forEachTextureData(std::function<void(TextureData&, int)> f) {
+    unsigned end = m_nextIndex - m_negativeOrdersNum;
+    for (int i = 1; i < end; ++i) {
+        f(m_textures[i], m_depths[i]);
+    }
+}
+
 void ComponentContainer::sort() {
     using std::swap;
     unsigned i = 0;

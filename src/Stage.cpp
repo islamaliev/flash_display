@@ -19,6 +19,7 @@ Stage::Stage(unsigned width, unsigned height) {
     _setWidth(width);
     _setHeight(height);
     _setDepth(0);
+    init();
 }
 
 void Stage::start() {

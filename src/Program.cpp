@@ -69,6 +69,8 @@ Program::Program() {
 void Program::init() {
     Result = GL_FALSE;
 
+    // TODO: make u_useTexture int
+    // TODO: merge C0-C3 into matrix
     const std::string& vertShaderCode = R"shaderCode(
         #version 330 core
 

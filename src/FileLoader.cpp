@@ -48,7 +48,7 @@ namespace {
 
         data_size = x * y * 3;
 
-        Texture* texture = new Texture(x, y);
+        Texture* texture = new flash::display::Texture(x, y);
 
         unsigned char * jdata = (unsigned char*) texture->data();
         while (info.output_scanline < info.output_height) // loop
@@ -62,6 +62,8 @@ namespace {
         jpeg_finish_decompress(&info);
 
         fclose(file);
+
+        texture->bindData();
 
         return texture;
     }

@@ -44,6 +44,10 @@ namespace flash {
 
         void forEach(std::function<void(SpatialComponent&, int)>);
 
+        void forEach2(std::function<void(SpatialComponent&, TextureData&, int)> f);
+
+        void forEachTextureData(std::function<void(TextureData&, int)>);
+
         SpatialComponent& getSpatialComponent(Entity);
 
         int& getDepthComponent(Entity);

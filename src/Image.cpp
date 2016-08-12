@@ -5,14 +5,15 @@
 using namespace flash::display;
 
 void Image::preRender(flash::render::RenderState& renderState) {
-    if (m_texture && visible()) {
-        s_context->setTexture(m_texture);
-    }
+//    if (m_texture && m_visible) {
+//        s_context->setTexture(m_texture);
+//    }
     DisplayObject::preRender(renderState);
 }
 
 void Image::setTexture(Texture* texture) {
     m_texture = texture;
+    _setTextureId(m_texture->getId());
     setActualWidth(texture->width());
     setActualHeight(texture->height());
 }
