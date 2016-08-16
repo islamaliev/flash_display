@@ -19,10 +19,12 @@ class ComponentContainer;
 
 namespace render {
     struct BufferData {
-        void* matrices;
-        void* textures;
+        math::Mat4* matrices;
+        int* textures;
+        unsigned* texturesCount;
         unsigned matricesSize;
         unsigned texturesSize;
+        unsigned numDraws;
     };
 
     class Context {

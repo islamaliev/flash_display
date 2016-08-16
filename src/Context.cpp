@@ -81,6 +81,7 @@ namespace {
 
         glBindVertexArray(_vao);
 
+        // TODO: move to const
         auto pointsSize = sizeof(_points);
 
         GLuint vertexBuffer = 0;
@@ -97,7 +98,7 @@ namespace {
 
         auto matRowSize = 4 * sizeof(float);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, (void*) pointsSize);
+        glVertexAttribIPointer(1, 1, GL_INT, 0, (void*) pointsSize);
         glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.texturesSize + 0 * matRowSize));
         glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.texturesSize + 1 * matRowSize));
         glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.texturesSize + 2 * matRowSize));
@@ -288,8 +289,8 @@ void Context::start(DisplayObject& stage) {
         RenderState renderState;
         stage.preRender(renderState);
 
-        bufData.textures = _frameAllocator.getPointer(textureIndicesMarker);
-        bufData.texturesSize = _frameAllocator.getMarker() - textureIndicesMarker;
+//        bufData.textures = _frameAllocator.getPointer(textureIndicesMarker);
+//        bufData.texturesSize = _frameAllocator.getMarker() - textureIndicesMarker;
 
         TransformationsBufferOrganizer::organize(stage, _frameAllocator, bufData);
 
@@ -343,51 +344,63 @@ void Context::TransformationsBufferOrganizer::organize(DisplayObject& stage, Sta
     ComponentContainer& components = stage._getComponents();
     components.sort();
 
-    const int textureNum = 4;
-    int* texturesCount = (int*) allocator.alloc(sizeof(int) * textureNum);
+    // TODO: move it to some kind of texture manager
+    const int textureNum = 4; // this includes shapes, e.g. objects with no texture
+    unsigned* texturesCount = (unsigned*) allocator.alloc(sizeof(unsigned) * textureNum);
     for (int i = 0; i < textureNum; ++i)
         texturesCount[i] = 0;
 
     int lastDepth = 1;
     int numLeafComponents = 0;
 
+    // TODO: calculate depending on GL_MAX_TEXTURE_IMAGE_UNITS value
+    static const int bitsInTextureGroup = 1;
+
     components.forEachTextureData([&numLeafComponents, texturesCount, &lastDepth](TextureData& textureData, int depth) {
         if (depth <= 0)
             return;
-        const int bitsInGroup = 1;
-        bool isLeaf = lastDepth != depth - 1;
+        bool toOverride = lastDepth == depth - 1;
         lastDepth = depth;
-        numLeafComponents += isLeaf;
-        unsigned int groupIndex = textureData.textureId  >> bitsInGroup;
-        texturesCount[groupIndex] = texturesCount[groupIndex] + isLeaf;
+        numLeafComponents += !toOverride;
+        unsigned int groupIndex = textureData.textureId  >> bitsInTextureGroup;
+        texturesCount[groupIndex] = texturesCount[groupIndex] + !toOverride;
     });
 
-    int* texturesOffsets = (int*) allocator.alloc(sizeof(int) * textureNum);
+    bufData.texturesCount = texturesCount;
+    // TODO: make value correct value is set
+    bufData.numDraws = textureNum >> bitsInTextureGroup;
 
-    texturesOffsets[0] = 0;
+    int* offsets = (int*) allocator.alloc(sizeof(int) * textureNum);
+
+    offsets[0] = 0;
     for (int i = 1; i < textureNum + 1; ++i) {
-        texturesOffsets[i] = texturesOffsets[i - 1] + texturesCount[i - 1];
+        offsets[i] = offsets[i - 1] + texturesCount[i - 1];
     }
 
     // TODO: find a way to get rid of this MAX_TREE_DEPTH
     Mat4* parentMatrices = (Mat4*) allocator.alloc(sizeof(Mat4) * MAX_TREE_DEPTH);
     *parentMatrices = Mat4();
 
-    Mat4* matrices = (Mat4*) allocator.alloc(sizeof(Mat4) * numLeafComponents);
+    bufData.matricesSize = sizeof(Mat4) * numLeafComponents;
+    bufData.matrices = (Mat4*) allocator.alloc(bufData.matricesSize);
+
+    bufData.texturesSize = sizeof(unsigned) * numLeafComponents;
+    bufData.textures = (int*) allocator.alloc(bufData.texturesSize);
 
     lastDepth = 1;
-    Mat4* lastMatrix = nullptr;
+    int lastIndex = 0;
 
-    components.forEach2([parentMatrices, &lastDepth, &lastMatrix, matrices, texturesOffsets]
+    components.forEach2([parentMatrices, &lastDepth, &lastIndex, &bufData, offsets]
             (SpatialComponent& spatial, TextureData& textureData, int depth) {
         if (depth <= 0)
             return;
-        const int bitsInGroup = 1;
-        int textureGroup = textureData.textureId >> bitsInGroup;
-        bool isLeaf = lastDepth != depth - 1;
+        int textureGroup = textureData.textureId >> bitsInTextureGroup;
+        bool toOverride = lastDepth == depth - 1;
         // TODO: check if conditional move is used here
-        Mat4* m = isLeaf ? matrices + texturesOffsets[textureGroup] : lastMatrix;
-        texturesOffsets[textureGroup] = texturesOffsets[textureGroup] + isLeaf;
+        int index = toOverride ? lastIndex : offsets[textureGroup];
+        offsets[textureGroup] = offsets[textureGroup] + !toOverride;
+        Mat4* m = bufData.matrices + index;
+        bufData.textures[index] = textureData.textureId ? (int) textureData.textureId : -1;
         *m = Mat4();
         float xt = spatial.x - spatial.pivotX * spatial.scaleX;
         float yt = spatial.y - spatial.pivotY * spatial.scaleY;
@@ -395,9 +408,7 @@ void Context::TransformationsBufferOrganizer::organize(DisplayObject& stage, Sta
         m->scale(spatial.width, spatial.height, 0);
         *m = parentMatrices[depth] = parentMatrices[depth - 1] * *m;
         lastDepth = depth;
-        lastMatrix = m;
+        lastIndex = index;
     });
 
-    bufData.matrices = matrices;
-    bufData.matricesSize = sizeof(Mat4) * numLeafComponents;
 }

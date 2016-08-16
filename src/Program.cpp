@@ -69,30 +69,25 @@ Program::Program() {
 void Program::init() {
     Result = GL_FALSE;
 
-    // TODO: make u_useTexture int
-    // TODO: merge C0-C3 into matrix
     const std::string& vertShaderCode = R"shaderCode(
         #version 330 core
 
         layout (location = 0) in vec3 position;
-        layout (location = 1) in float u_useTexture;
-        layout (location = 2) in vec4 C0;
-        layout (location = 3) in vec4 C1;
-        layout (location = 4) in vec4 C2;
-        layout (location = 5) in vec4 C3;
+        layout (location = 1) in int u_useTexture;
+        layout (location = 2) in mat4 transform;
 
         uniform mat4 u_projection;
 
         out Fragment {
             vec2 tc;
-            float u_textureIndex;
+            flat int u_textureIndex;
         } fragment;
 
         void main() {
             fragment.tc.x = position.x;
             fragment.tc.y = 1 - position.y;
             fragment.u_textureIndex = u_useTexture;
-            gl_Position = u_projection * mat4(C0, C1, C2, C3) * vec4(position, 1.0);
+            gl_Position = u_projection * transform * vec4(position, 1.0);
         })shaderCode";
 
     const std::string& fragShaderCode = R"shaderCode(
@@ -103,14 +98,14 @@ void Program::init() {
 
         in Fragment {
             vec2 tc;
-            float u_textureIndex;
+            flat int u_textureIndex;
         } fragment;
 
         void main() {
             if (fragment.u_textureIndex == -1) {
                 color = vec4(1, 0, 0, 1);
             } else {
-                color = texture(u_textures[int(fragment.u_textureIndex)], fragment.tc);
+                color = texture(u_textures[fragment.u_textureIndex], fragment.tc);
             }
         })shaderCode";
 
