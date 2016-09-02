@@ -32,6 +32,11 @@ namespace {
 
     GLuint _vao = 0;
 
+    // TODO: calculate depending on GL_MAX_TEXTURE_IMAGE_UNITS value
+    const unsigned bitsInTextureGroup = 1;
+    // TODO: GL_MAX_TEXTURE_IMAGE_UNITS value
+    const unsigned maxTextureUnits = 2;
+
     float _points[] = {
             0.0f,  1.0f,  0.0f,
             1.0f, 1.0f,  0.0f,
@@ -69,55 +74,59 @@ namespace {
     }
 
     void _draw(BufferData& bufData) {
-        glBindVertexArray(_vao);
-        if (_textures.size() > 0) {
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, _textures[0]);
-            if (_textures.size() > 1) {
-                glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, _textures[1]);
+        auto batchOffset = 0;
+        for (auto drawIndex = 0; drawIndex < bufData.numDraws; ++drawIndex) {
+            auto batchSize = bufData.batchSizes[drawIndex];
+            glBindVertexArray(_vao);
+            {
+                auto offset = drawIndex * maxTextureUnits;
+                for (auto i = 0; i < maxTextureUnits; ++i) {
+                    glActiveTexture(GL_TEXTURE0 + i);
+                    glBindTexture(GL_TEXTURE_2D, i + offset);
+                }
             }
+
+            glBindVertexArray(_vao);
+
+            // TODO: move to const
+            auto pointsSize = sizeof(_points);
+            auto texturesSize = batchSize * sizeof(unsigned);
+            auto matricesSize = batchSize * sizeof(Mat4);
+
+            GLuint vertexBuffer = 0;
+            glGenBuffers(1, &vertexBuffer);
+            glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+            glBufferData(GL_ARRAY_BUFFER, pointsSize + texturesSize + matricesSize, NULL, GL_STATIC_DRAW);
+
+            glBufferSubData(GL_ARRAY_BUFFER, 0,                         pointsSize,   _points);
+            glBufferSubData(GL_ARRAY_BUFFER, pointsSize,                texturesSize, bufData.textures + batchOffset);
+            glBufferSubData(GL_ARRAY_BUFFER, pointsSize + texturesSize, matricesSize, bufData.matrices + batchOffset);
+
+            auto matRowSize = 4 * sizeof(float);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glVertexAttribIPointer(1, 1, GL_INT, 0, (void*) pointsSize);
+            auto matPoint = pointsSize + texturesSize;
+            glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (matPoint + 0 * matRowSize));
+            glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (matPoint + 1 * matRowSize));
+            glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (matPoint + 2 * matRowSize));
+            glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (matPoint + 3 * matRowSize));
+
+            glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(1);
+            glEnableVertexAttribArray(2);
+            glEnableVertexAttribArray(3);
+            glEnableVertexAttribArray(4);
+            glEnableVertexAttribArray(5);
+            glVertexAttribDivisor(1, 1);
+            glVertexAttribDivisor(2, 1);
+            glVertexAttribDivisor(3, 1);
+            glVertexAttribDivisor(4, 1);
+            glVertexAttribDivisor(5, 1);
+
+            program.activate(nullptr);
+            glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr, (GLsizei) batchSize);
+            batchOffset += batchSize;
         }
-
-        glBindVertexArray(_vao);
-
-        // TODO: move to const
-        auto pointsSize = sizeof(_points);
-
-        GLuint vertexBuffer = 0;
-        glGenBuffers(1, &vertexBuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-        glBufferData(GL_ARRAY_BUFFER, pointsSize + bufData.texturesSize + bufData.matricesSize, NULL, GL_STATIC_DRAW);
-
-        unsigned offset = 0;
-        glBufferSubData(GL_ARRAY_BUFFER, offset, pointsSize, _points);
-        offset += pointsSize;
-        glBufferSubData(GL_ARRAY_BUFFER, offset, bufData.texturesSize, bufData.textures);
-        offset += bufData.texturesSize;
-        glBufferSubData(GL_ARRAY_BUFFER, offset,  bufData.matricesSize, bufData.matrices);
-
-        auto matRowSize = 4 * sizeof(float);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        glVertexAttribIPointer(1, 1, GL_INT, 0, (void*) pointsSize);
-        glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.texturesSize + 0 * matRowSize));
-        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.texturesSize + 1 * matRowSize));
-        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.texturesSize + 2 * matRowSize));
-        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (pointsSize + bufData.texturesSize + 3 * matRowSize));
-
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-        glEnableVertexAttribArray(2);
-        glEnableVertexAttribArray(3);
-        glEnableVertexAttribArray(4);
-        glEnableVertexAttribArray(5);
-        glVertexAttribDivisor(1, 1);
-        glVertexAttribDivisor(2, 1);
-        glVertexAttribDivisor(3, 1);
-        glVertexAttribDivisor(4, 1);
-        glVertexAttribDivisor(5, 1);
-
-        program.activate(nullptr);
-        glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr, (GLsizei) (bufData.matricesSize / sizeof(Mat4)));
     }
 }
 
@@ -284,13 +293,8 @@ void Context::start(DisplayObject& stage) {
 
         BufferData bufData;
 
-        Marker textureIndicesMarker = _frameAllocator.getMarker();
-
         RenderState renderState;
         stage.preRender(renderState);
-
-//        bufData.textures = _frameAllocator.getPointer(textureIndicesMarker);
-//        bufData.texturesSize = _frameAllocator.getMarker() - textureIndicesMarker;
 
         TransformationsBufferOrganizer::organize(stage, _frameAllocator, bufData);
 
@@ -344,37 +348,33 @@ void Context::TransformationsBufferOrganizer::organize(DisplayObject& stage, Sta
     ComponentContainer& components = stage._getComponents();
     components.sort();
 
-    // TODO: move it to some kind of texture manager
+    // TODO: should be real num of textures. Move it to some kind of texture manager
     const int textureNum = 4; // this includes shapes, e.g. objects with no texture
-    unsigned* texturesCount = (unsigned*) allocator.alloc(sizeof(unsigned) * textureNum);
-    for (int i = 0; i < textureNum; ++i)
-        texturesCount[i] = 0;
+    unsigned* batchSizes = (unsigned*) allocator.alloc(sizeof(unsigned) * textureNum);
+    memset(batchSizes, 0, sizeof(unsigned) * textureNum);
 
     int lastDepth = 1;
     int numLeafComponents = 0;
 
-    // TODO: calculate depending on GL_MAX_TEXTURE_IMAGE_UNITS value
-    static const int bitsInTextureGroup = 1;
-
-    components.forEachTextureData([&numLeafComponents, texturesCount, &lastDepth](TextureData& textureData, int depth) {
+    components.forEachTextureData([&numLeafComponents, batchSizes, &lastDepth](TextureData& textureData, int depth) {
         if (depth <= 0)
             return;
         bool toOverride = lastDepth == depth - 1;
         lastDepth = depth;
         numLeafComponents += !toOverride;
-        unsigned int groupIndex = textureData.textureId  >> bitsInTextureGroup;
-        texturesCount[groupIndex] = texturesCount[groupIndex] + !toOverride;
+        auto batchIndex = textureData.textureId  >> bitsInTextureGroup;
+        batchSizes[batchIndex] = batchSizes[batchIndex] + !toOverride;
     });
 
-    bufData.texturesCount = texturesCount;
+    bufData.batchSizes = batchSizes;
     // TODO: make value correct value is set
-    bufData.numDraws = textureNum >> bitsInTextureGroup;
+    bufData.numDraws = (textureNum + 1) >> bitsInTextureGroup;
 
     int* offsets = (int*) allocator.alloc(sizeof(int) * textureNum);
 
     offsets[0] = 0;
     for (int i = 1; i < textureNum + 1; ++i) {
-        offsets[i] = offsets[i - 1] + texturesCount[i - 1];
+        offsets[i] = offsets[i - 1] + batchSizes[i - 1];
     }
 
     // TODO: find a way to get rid of this MAX_TREE_DEPTH
@@ -394,21 +394,18 @@ void Context::TransformationsBufferOrganizer::organize(DisplayObject& stage, Sta
             (SpatialComponent& spatial, TextureData& textureData, int depth) {
         if (depth <= 0)
             return;
-        int textureGroup = textureData.textureId >> bitsInTextureGroup;
+        auto batchIndex = textureData.textureId >> bitsInTextureGroup;
         bool toOverride = lastDepth == depth - 1;
         // TODO: check if conditional move is used here
-        int index = toOverride ? lastIndex : offsets[textureGroup];
-        offsets[textureGroup] = offsets[textureGroup] + !toOverride;
+        auto index = toOverride ? lastIndex : offsets[batchIndex];
+        offsets[batchIndex] = offsets[batchIndex] + !toOverride;
+        bufData.textures[index] = textureData.textureId ? (int) textureData.textureId - (batchIndex << bitsInTextureGroup) : -1;
         Mat4* m = bufData.matrices + index;
-        bufData.textures[index] = textureData.textureId ? (int) textureData.textureId : -1;
         *m = Mat4();
-        float xt = spatial.x - spatial.pivotX * spatial.scaleX;
-        float yt = spatial.y - spatial.pivotY * spatial.scaleY;
-        m->translate(xt, yt, 0);
+        m->translate(spatial.x - spatial.pivotX * spatial.scaleX, spatial.y - spatial.pivotY * spatial.scaleY, 0);
         m->scale(spatial.width, spatial.height, 0);
         *m = parentMatrices[depth] = parentMatrices[depth - 1] * *m;
         lastDepth = depth;
         lastIndex = index;
     });
-
 }

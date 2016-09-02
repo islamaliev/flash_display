@@ -21,7 +21,7 @@ namespace render {
     struct BufferData {
         math::Mat4* matrices;
         int* textures;
-        unsigned* texturesCount;
+        unsigned* batchSizes;
         unsigned matricesSize;
         unsigned texturesSize;
         unsigned numDraws;
