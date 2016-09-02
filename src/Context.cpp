@@ -2,7 +2,6 @@
 #include "GL/glew.h"
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include <cassert>
 #include <RenderBufferOrganizer.h>
 #include "Program.h"
 #include "DisplayObject.h"
@@ -17,6 +16,9 @@ using DisplayObject = flash::display::DisplayObject;
 using namespace flash;
 using namespace render;
 
+int Context::s_maxTextureUnits = 2;
+int Context::s_batchBitsNum = 1;
+
 namespace {
     Program program;
     GLFWwindow* window;
@@ -24,9 +26,6 @@ namespace {
     StackAllocator _frameAllocator = StackAllocator(4000000);
 
     GLuint _vao = 0;
-
-    // TODO: GL_MAX_TEXTURE_IMAGE_UNITS value
-    const unsigned maxTextureUnits = 2;
 
     float _points[] = {
             0.0f,  1.0f,  0.0f,
@@ -41,8 +40,13 @@ namespace {
     };
 
     void _init() {
-//        int sizeToReserve;
-//        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &sizeToReserve);
+#ifndef OFFSCREEN
+        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &Context::s_maxTextureUnits);
+        Context::s_batchBitsNum = 0;
+        auto i = Context::s_maxTextureUnits;
+        while (i >>= 1)
+            ++Context::s_batchBitsNum;
+#endif
     }
 
     void _clear() {
@@ -65,8 +69,8 @@ namespace {
             auto batchSize = bufData.batchSizes[drawIndex];
             glBindVertexArray(_vao);
             {
-                auto offset = drawIndex * maxTextureUnits;
-                for (unsigned i = 0; i < maxTextureUnits; ++i) {
+                auto offset = drawIndex * Context::s_maxTextureUnits;
+                for (unsigned i = 0; i < Context::s_maxTextureUnits; ++i) {
                     glActiveTexture(GL_TEXTURE0 + i);
                     glBindTexture(GL_TEXTURE_2D, i + offset);
                 }

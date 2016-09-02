@@ -12,6 +12,8 @@ namespace display {
 
     class Texture {
     public:
+        // TODO: move it to some kind of texture manager
+        static unsigned s_numTextures;
 
         Texture(unsigned width, unsigned height);
 

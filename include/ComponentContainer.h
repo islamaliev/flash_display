@@ -42,9 +42,7 @@ namespace flash {
 
         void removeEntity(const Entity&);
 
-        void forEach(std::function<void(SpatialComponent&, int)>);
-
-        void forEach2(std::function<void(SpatialComponent&, TextureData&, int)> f);
+        void forEach(std::function<void(SpatialComponent&, TextureData&, int)> f);
 
         void forEachTextureData(std::function<void(TextureData&, int)>);
 

@@ -20,6 +20,9 @@ namespace render {
 
     class Context {
     public:
+        static int s_maxTextureUnits;
+        static int s_batchBitsNum;
+    
         using TextureIndexType = unsigned;
         
         void init(unsigned width, unsigned height);

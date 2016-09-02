@@ -6,13 +6,17 @@ using namespace flash::display;
 
 using Color = flash::core::Color;
 
+unsigned Texture::s_numTextures = 0;
+
 Texture::Texture(unsigned width, unsigned height)
         : m_width(width)
         , m_height(height) {
     m_data = new Color[width * height];
+    ++s_numTextures;
 }
 
 Texture::~Texture() {
+    --s_numTextures;
     delete [](m_data);
 }
 
