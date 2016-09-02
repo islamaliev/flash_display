@@ -4,18 +4,11 @@ namespace flash {
 
 namespace display {
     class DisplayObject;
-    class Texture;
 }
 
 namespace math {
     class Mat4;
 }
-
-namespace allocator {
-    class StackAllocator;
-}
-
-class ComponentContainer;
 
 namespace render {
     struct BufferData {
@@ -27,11 +20,8 @@ namespace render {
 
     class Context {
     public:
-        class RenderBufferOrganizer {
-        public:
-            static void organize(display::DisplayObject& stage, allocator::StackAllocator&, BufferData&);
-        };
-
+        using TextureIndexType = unsigned;
+        
         void init(unsigned width, unsigned height);
 
         void start(display::DisplayObject& displayObject);
@@ -40,7 +30,7 @@ namespace render {
 
         void dispose();
 
-        void setProjection(const flash::math::Mat4& matrix);
+        void setProjection(const math::Mat4& matrix);
     };
 }
 

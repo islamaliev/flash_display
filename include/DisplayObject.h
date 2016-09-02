@@ -11,6 +11,7 @@ class ComponentContainer;
 namespace render {
     class Context;
     class RenderState;
+    class RenderBufferOrganizer;
 }
 
 namespace display {
@@ -144,7 +145,7 @@ namespace display {
         friend class Stage;
         friend class Shape;
         friend class Image;
-        friend class render::Context;
+        friend class render::RenderBufferOrganizer;
     };
 
 }

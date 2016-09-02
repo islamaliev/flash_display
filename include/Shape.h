@@ -8,7 +8,9 @@ namespace display {
 
     class Shape : public DisplayObject {
     public:
-        void preRender(flash::render::RenderState& renderState) override;
+        void preRender(flash::render::RenderState& renderState) override {
+            DisplayObject::preRender(renderState);
+        };
     };
 
 }
