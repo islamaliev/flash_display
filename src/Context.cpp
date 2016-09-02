@@ -25,9 +25,8 @@ namespace {
     Program program;
     GLFWwindow* window;
 
-    using TextureIndexType = float;
+    using TextureIndexType = unsigned;
 
-    std::vector<unsigned> _textures;
     StackAllocator _frameAllocator = StackAllocator(4000000);
 
     GLuint _vao = 0;
@@ -49,18 +48,13 @@ namespace {
             3, 0, 2
     };
 
-    int _firstTexture = -1;
-
     void _init() {
-        _textures = {};
-        int sizeToReserve;
-        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &sizeToReserve);
-        _textures.reserve((unsigned long) sizeToReserve);
+//        int sizeToReserve;
+//        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &sizeToReserve);
     }
 
     void _clear() {
         _frameAllocator.clear();
-        _textures.clear();
     }
 
     void _initVAO() {
@@ -80,7 +74,7 @@ namespace {
             glBindVertexArray(_vao);
             {
                 auto offset = drawIndex * maxTextureUnits;
-                for (auto i = 0; i < maxTextureUnits; ++i) {
+                for (unsigned i = 0; i < maxTextureUnits; ++i) {
                     glActiveTexture(GL_TEXTURE0 + i);
                     glBindTexture(GL_TEXTURE_2D, i + offset);
                 }
@@ -90,7 +84,7 @@ namespace {
 
             // TODO: move to const
             auto pointsSize = sizeof(_points);
-            auto texturesSize = batchSize * sizeof(unsigned);
+            auto texturesSize = batchSize * sizeof(TextureIndexType);
             auto matricesSize = batchSize * sizeof(Mat4);
 
             GLuint vertexBuffer = 0;
@@ -296,7 +290,7 @@ void Context::start(DisplayObject& stage) {
         RenderState renderState;
         stage.preRender(renderState);
 
-        TransformationsBufferOrganizer::organize(stage, _frameAllocator, bufData);
+        RenderBufferOrganizer::organize(stage, _frameAllocator, bufData);
 
         _draw(bufData);
 
@@ -326,25 +320,7 @@ void Context::setProjection(const flash::math::Mat4& matrix) {
     program.setUniform("u_projection", matrix);
 }
 
-// TODO: make Texture const?
-void Context::setTexture(Texture* texture) {
-    if (!texture->getId()) {
-        texture->bindData();
-        if (_firstTexture == -1) {
-            _firstTexture = texture->getId();
-        }
-        _textures.push_back(texture->getId());
-    }
-    TextureIndexType* texInd = (TextureIndexType*) _frameAllocator.alloc(sizeof(TextureIndexType));
-    *texInd = _firstTexture == texture->getId() ? 0 : 1;
-}
-
-void Context::unsetTexture() {
-    TextureIndexType* texInd = (TextureIndexType*) _frameAllocator.alloc(sizeof(TextureIndexType));
-    *texInd = -1;
-}
-
-void Context::TransformationsBufferOrganizer::organize(DisplayObject& stage, StackAllocator& allocator, BufferData& bufData) {
+void Context::RenderBufferOrganizer::organize(DisplayObject& stage, StackAllocator& allocator, BufferData& bufData) {
     ComponentContainer& components = stage._getComponents();
     components.sort();
 
@@ -381,11 +357,8 @@ void Context::TransformationsBufferOrganizer::organize(DisplayObject& stage, Sta
     Mat4* parentMatrices = (Mat4*) allocator.alloc(sizeof(Mat4) * MAX_TREE_DEPTH);
     *parentMatrices = Mat4();
 
-    bufData.matricesSize = sizeof(Mat4) * numLeafComponents;
-    bufData.matrices = (Mat4*) allocator.alloc(bufData.matricesSize);
-
-    bufData.texturesSize = sizeof(unsigned) * numLeafComponents;
-    bufData.textures = (int*) allocator.alloc(bufData.texturesSize);
+    bufData.matrices = (Mat4*) allocator.alloc(sizeof(Mat4) * numLeafComponents);
+    bufData.textures = (int*) allocator.alloc(sizeof(TextureIndexType) * numLeafComponents);
 
     lastDepth = 1;
     int lastIndex = 0;

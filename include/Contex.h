@@ -22,14 +22,12 @@ namespace render {
         math::Mat4* matrices;
         int* textures;
         unsigned* batchSizes;
-        unsigned matricesSize;
-        unsigned texturesSize;
         unsigned numDraws;
     };
 
     class Context {
     public:
-        class TransformationsBufferOrganizer {
+        class RenderBufferOrganizer {
         public:
             static void organize(display::DisplayObject& stage, allocator::StackAllocator&, BufferData&);
         };
@@ -43,10 +41,6 @@ namespace render {
         void dispose();
 
         void setProjection(const flash::math::Mat4& matrix);
-
-        void setTexture(display::Texture*);
-
-        void unsetTexture();
     };
 }
 
