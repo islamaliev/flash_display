@@ -14,6 +14,72 @@ using Mat4 = math::Mat4;
 using DisplayObject = display::DisplayObject;
 using StackAllocator = allocator::StackAllocator;
 
+namespace {
+    class ForEachTextureDataIterator {
+    public:
+        ForEachTextureDataIterator(int& numLeafComponents, unsigned* batchSizes, int& lastDepth, unsigned& numDraws)
+            : m_numLeafComponents(numLeafComponents)
+            , m_batchSizes(batchSizes)
+            , m_lastDepth(lastDepth)
+            , m_numDraws(numDraws){}
+        
+        void operator()(TextureData& textureData, int depth) {
+            if (depth <= 0)
+                return;
+            bool toOverride = m_lastDepth == depth - 1;
+            m_lastDepth = depth;
+            m_numLeafComponents += !toOverride;
+            auto batchIndex = textureData.textureId  >> Context::s_batchBitsNum;
+            m_batchSizes[batchIndex] = m_batchSizes[batchIndex] + !toOverride;
+            m_numDraws = m_numDraws < batchIndex ? batchIndex : m_numDraws;
+        }
+        
+    private:
+        int& m_numLeafComponents;
+        unsigned* m_batchSizes;
+        int& m_lastDepth;
+        unsigned& m_numDraws;
+    };
+    
+    class ForEachIterator {
+    public:
+        ForEachIterator(Mat4* parentMatrices, int& lastDepth, int& lastIndex, BufferData& bufData, int* offsets)
+            : m_parentMatrices(parentMatrices)
+            , m_lastDepth(lastDepth)
+            , m_lastIndex(lastIndex)
+            , m_bufData(bufData)
+            , m_offsets(offsets) {}
+        
+        void operator()(SpatialComponent& spatial, TextureData& textureData, int depth) {
+            if (depth <= 0)
+                return;
+            auto batchIndex = textureData.textureId >> Context::s_batchBitsNum;
+            bool toOverride = m_lastDepth == depth - 1;
+            // TODO: check if conditional move is used here
+            auto index = toOverride ? m_lastIndex : m_offsets[batchIndex];
+            // current batch offset advances once an object is added
+            m_offsets[batchIndex] = m_offsets[batchIndex] + !toOverride;
+            // for shapes the index is -1 so that it can be checked in ths frag shader
+            // all other indices must be from 0 to GL_MAX_TEXTURE_IMAGE_UNITS
+            m_bufData.textures[index] = textureData.textureId ? int(textureData.textureId - (batchIndex << Context::s_batchBitsNum)) : -1;
+            Mat4* m = m_bufData.matrices + index;
+            *m = Mat4();
+            m->translate(spatial.x - spatial.pivotX * spatial.scaleX, spatial.y - spatial.pivotY * spatial.scaleY, 0);
+            m->scale(spatial.width, spatial.height, 0);
+            *m = m_parentMatrices[depth] = m_parentMatrices[depth - 1] * *m;
+            m_lastDepth = depth;
+            m_lastIndex = index;
+        }
+                
+    private:
+        Mat4* m_parentMatrices;
+        int& m_lastDepth;
+        int& m_lastIndex;
+        BufferData& m_bufData;
+        int* m_offsets;
+    };
+}
+
 // TODO: find a way to get rid of this MAX_TREE_DEPTH
 #define MAX_TREE_DEPTH 100
 
@@ -31,16 +97,7 @@ void RenderBufferOrganizer::organize(flash::display::DisplayObject& stage, Stack
     int numLeafComponents = 0;
     unsigned numDraws = 0;
 
-    components.forEachTextureData([&numLeafComponents, batchSizes, &lastDepth, &numDraws](TextureData& textureData, int depth) {
-        if (depth <= 0)
-            return;
-        bool toOverride = lastDepth == depth - 1;
-        lastDepth = depth;
-        numLeafComponents += !toOverride;
-        auto batchIndex = textureData.textureId  >> Context::s_batchBitsNum;
-        batchSizes[batchIndex] = batchSizes[batchIndex] + !toOverride;
-        numDraws = numDraws < batchIndex ? batchIndex : numDraws;
-    });
+    components.forEachTextureData(ForEachTextureDataIterator(numLeafComponents, batchSizes, lastDepth, numDraws));
 
     bufData.batchSizes = batchSizes;
     bufData.numDraws = numDraws + 1;
@@ -60,26 +117,6 @@ void RenderBufferOrganizer::organize(flash::display::DisplayObject& stage, Stack
 
     lastDepth = 1;
     int lastIndex = 0;
-
-    components.forEach([parentMatrices, &lastDepth, &lastIndex, &bufData, offsets]
-                      (SpatialComponent& spatial, TextureData& textureData, int depth) {
-        if (depth <= 0)
-            return;
-        auto batchIndex = textureData.textureId >> Context::s_batchBitsNum;
-        bool toOverride = lastDepth == depth - 1;
-        // TODO: check if conditional move is used here
-        auto index = toOverride ? lastIndex : offsets[batchIndex];
-        // current batch offset advances once an object is added
-        offsets[batchIndex] = offsets[batchIndex] + !toOverride;
-        // for shapes the index is -1 so that it can be checked in ths frag shader
-        // all other indices must be from 0 to GL_MAX_TEXTURE_IMAGE_UNITS
-        bufData.textures[index] = textureData.textureId ? int(textureData.textureId - (batchIndex << Context::s_batchBitsNum)) : -1;
-        Mat4* m = bufData.matrices + index;
-        *m = Mat4();
-        m->translate(spatial.x - spatial.pivotX * spatial.scaleX, spatial.y - spatial.pivotY * spatial.scaleY, 0);
-        m->scale(spatial.width, spatial.height, 0);
-        *m = parentMatrices[depth] = parentMatrices[depth - 1] * *m;
-        lastDepth = depth;
-        lastIndex = index;
-    });
+    
+    components.forEach(ForEachIterator(parentMatrices, lastDepth, lastIndex, bufData, offsets));
 }
