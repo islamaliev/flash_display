@@ -1,8 +1,8 @@
 #include "Contex.h"
 #include "GL/glew.h"
 #include <GLFW/glfw3.h>
-#include <iostream>
-#include <RenderBufferOrganizer.h>
+#include <cassert>
+#include "RenderBufferOrganizer.h"
 #include "Program.h"
 #include "DisplayObject.h"
 #include "StackAllocator.h"
@@ -16,6 +16,7 @@ using DisplayObject = flash::display::DisplayObject;
 using namespace flash;
 using namespace render;
 
+// these values are for offset renderer
 int Context::s_maxTextureUnits = 2;
 int Context::s_batchBitsNum = 1;
 

@@ -17,6 +17,9 @@ Texture::Texture(unsigned width, unsigned height)
 
 Texture::~Texture() {
     --s_numTextures;
+    if (m_id) {
+        glDeleteTextures(1, &m_id);
+    }
     delete [](m_data);
 }
 
