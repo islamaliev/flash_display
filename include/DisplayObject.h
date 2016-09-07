@@ -24,7 +24,9 @@ namespace display {
     public:
 
         using Rectangle = flash::core::Rectangle;
-
+    
+        static flash::math::Mat4 _getTransform(const SpatialComponent&);
+    
         DisplayObject();
 
         virtual ~DisplayObject();
@@ -65,7 +67,9 @@ namespace display {
 
         virtual void preRender(flash::render::RenderState&) = 0;
 
-        flash::math::Mat4 getTransform() const;
+        flash::math::Mat4 getTransform() const {
+            return DisplayObject::_getTransform(_spatial());
+        }
 
         flash::math::Mat4 getTransform(DisplayObjectContainer* targetSpace) const;
 

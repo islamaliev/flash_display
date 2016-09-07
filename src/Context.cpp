@@ -16,7 +16,7 @@ using DisplayObject = flash::display::DisplayObject;
 using namespace flash;
 using namespace render;
 
-// these values are for offset renderer
+// these default values are for offset renderer
 int Context::s_maxTextureUnits = 2;
 int Context::s_batchBitsNum = 1;
 
@@ -47,6 +47,7 @@ namespace {
         auto i = Context::s_maxTextureUnits;
         while (i >>= 1)
             ++Context::s_batchBitsNum;
+//        printf("GL_MAX_TEXTURE_IMAGE_UNITS = %d\n", Context::s_maxTextureUnits);
 #endif
     }
 

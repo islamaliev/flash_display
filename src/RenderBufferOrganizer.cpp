@@ -63,9 +63,7 @@ namespace {
             // all other indices must be from 0 to GL_MAX_TEXTURE_IMAGE_UNITS
             m_bufData.textures[index] = textureData.textureId ? int(textureData.textureId - (batchIndex << Context::s_batchBitsNum)) : -1;
             Mat4* m = m_bufData.matrices + index;
-            *m = Mat4();
-            m->translate(spatial.x - spatial.pivotX * spatial.scaleX, spatial.y - spatial.pivotY * spatial.scaleY, 0);
-            m->scale(spatial.width, spatial.height, 0);
+            *m = DisplayObject::_getTransform(spatial);
             *m = m_parentMatrices[depth] = m_parentMatrices[depth - 1] * *m;
             m_lastDepth = depth;
             m_lastIndex = index;
