@@ -29,10 +29,10 @@ namespace {
     GLuint _vao = 0;
 
     float _points[] = {
-            0.0f,  1.0f,  0.0f,
-            1.0f, 1.0f,  0.0f,
-            1.0f, 0.0f,  0.0f,
-            0.0f, 0.0f,  0.0f
+            0.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, 0.0f,
+            1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f
     };
 
     GLuint _indecies[] = {

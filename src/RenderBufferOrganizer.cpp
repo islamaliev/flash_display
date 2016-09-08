@@ -50,7 +50,7 @@ namespace {
             , m_bufData(bufData)
             , m_offsets(offsets) {}
         
-        void operator()(SpatialComponent& spatial, TextureData& textureData, int depth) {
+        void operator()(SpatialComponent& spatial, TextureData& textureData, int depth, int order) {
             if (depth <= 0)
                 return;
             auto batchIndex = textureData.textureId >> Context::s_batchBitsNum;
@@ -63,8 +63,7 @@ namespace {
             // all other indices must be from 0 to GL_MAX_TEXTURE_IMAGE_UNITS
             m_bufData.textures[index] = textureData.textureId ? int(textureData.textureId - (batchIndex << Context::s_batchBitsNum)) : -1;
             Mat4* m = m_bufData.matrices + index;
-            *m = DisplayObject::_getTransform(spatial);
-            *m = m_parentMatrices[depth] = m_parentMatrices[depth - 1] * *m;
+            *m = m_parentMatrices[depth] = m_parentMatrices[depth - 1] * DisplayObject::_getTransform(spatial, order);
             m_lastDepth = depth;
             m_lastIndex = index;
         }

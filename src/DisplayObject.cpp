@@ -33,11 +33,11 @@ void DisplayObject::preRender(flash::render::RenderState& renderState) {
     }
 }
 
-Mat4 DisplayObject::_getTransform(const SpatialComponent& spatial) {
+Mat4 DisplayObject::_getTransform(const SpatialComponent& spatial, int z) {
     Mat4 m;
     float xt = spatial.x - spatial.pivotX * spatial.scaleX;
     float yt = spatial.y - spatial.pivotY * spatial.scaleY;
-    m.translate(xt, yt, 0);
+    m.translate(xt, yt, z);
     m.scale(spatial.width, spatial.height, 0);
     return m;
 }
