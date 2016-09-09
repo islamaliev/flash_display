@@ -38,7 +38,7 @@ Mat4 DisplayObject::_getTransform(const SpatialComponent& spatial, int z) {
     float xt = spatial.x - spatial.pivotX * spatial.scaleX;
     float yt = spatial.y - spatial.pivotY * spatial.scaleY;
     m.translate(xt, yt, z);
-    m.scale(spatial.width, spatial.height, 0);
+    m.scale(spatial.width, spatial.height, 1);
     return m;
 }
 
