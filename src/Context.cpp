@@ -66,15 +66,22 @@ namespace {
     }
 
     void _draw(BufferData& bufData) {
+//        auto batchOffset = bufData.batchSizes[0];
+//        for (auto drawIndex = 1; drawIndex < bufData.numDraws; ++drawIndex) {
         auto batchOffset = 0;
         for (auto drawIndex = 0; drawIndex < bufData.numDraws; ++drawIndex) {
             auto batchSize = bufData.batchSizes[drawIndex];
+            std::vector<int> texUnits(Context::s_maxTextureUnits, -1);
             glBindVertexArray(_vao);
             {
-                auto offset = drawIndex * Context::s_maxTextureUnits;
+                int units = Context::s_maxTextureUnits;
+                auto offset = drawIndex * units;
                 for (unsigned i = 0; i < Context::s_maxTextureUnits; ++i) {
-                    glActiveTexture(GL_TEXTURE0 + i);
-                    glBindTexture(GL_TEXTURE_2D, i + offset);
+                    if (i + offset) {
+                        glActiveTexture(GL_TEXTURE0 + i);
+                        glBindTexture(GL_TEXTURE_2D, i + offset);
+                        texUnits[i] = i + offset;
+                    }
                 }
             }
 
@@ -85,14 +92,22 @@ namespace {
             auto texturesSize = batchSize * sizeof(Context::TextureIndexType);
             auto matricesSize = batchSize * sizeof(Mat4);
 
+            std::vector<int> ts(batchSize);
+            std::vector<Mat4> ms(batchSize);
+            
+            for (int k = batchOffset; k < batchSize + batchOffset; ++k) {
+                ts[k - batchOffset] = bufData.textures[k];
+                ms[k - batchOffset] = bufData.matrices[k];
+            }
+            
             GLuint vertexBuffer = 0;
             glGenBuffers(1, &vertexBuffer);
             glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
             glBufferData(GL_ARRAY_BUFFER, pointsSize + texturesSize + matricesSize, NULL, GL_STATIC_DRAW);
 
             glBufferSubData(GL_ARRAY_BUFFER, 0,                         pointsSize,   _points);
-            glBufferSubData(GL_ARRAY_BUFFER, pointsSize,                texturesSize, bufData.textures + batchOffset);
-            glBufferSubData(GL_ARRAY_BUFFER, pointsSize + texturesSize, matricesSize, bufData.matrices + batchOffset);
+            glBufferSubData(GL_ARRAY_BUFFER, pointsSize,                texturesSize, ts.data());
+            glBufferSubData(GL_ARRAY_BUFFER, pointsSize + texturesSize, matricesSize, ms.data());
 
             auto matRowSize = 4 * sizeof(float);
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -265,8 +280,8 @@ void Context::init(unsigned width, unsigned height) {
 
     glClearColor(0.1, 0.1, 0.1, 1);
     glClearDepth(1.0f);
-    int tex[5] = {0, 1, 2, 3, 4};
-    program.setUniform("u_textures", tex, 5);
+    int tex[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+    program.setUniform("u_textures", tex, 16);
 }
 
 void Context::start(DisplayObject& stage) {
