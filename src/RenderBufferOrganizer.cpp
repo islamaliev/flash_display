@@ -30,8 +30,10 @@ namespace {
             m_lastDepth = depth;
             m_numLeafComponents += !toOverride;
             auto batchIndex = textureData.textureId  >> Context::s_batchBitsNum;
-            m_batchSizes[batchIndex] = m_batchSizes[batchIndex] + !toOverride;
+            ++m_batchSizes[batchIndex];
+            m_batchSizes[m_lastBatchIndex] -= toOverride;
             m_numDraws = m_numDraws < batchIndex ? batchIndex : m_numDraws;
+            m_lastBatchIndex = batchIndex;
         }
         
     private:
@@ -39,6 +41,7 @@ namespace {
         unsigned* m_batchSizes;
         int& m_lastDepth;
         unsigned& m_numDraws;
+        unsigned m_lastBatchIndex{0};
     };
     
     class ForEachIterator {
@@ -58,14 +61,20 @@ namespace {
             // TODO: check if conditional move is used here
             auto index = toOverride ? m_lastIndex : m_offsets[batchIndex];
             // current batch offset advances once an object is added
-            m_offsets[batchIndex] = m_offsets[batchIndex] + !toOverride;
+            ++m_offsets[batchIndex];
+            m_offsets[m_lastBatchIndex] -= toOverride;
             // for shapes the index is -1 so that it can be checked in ths frag shader
             // all other indices must be from 0 to GL_MAX_TEXTURE_IMAGE_UNITS
-            m_bufData.textures[index] = textureData.textureId ? int(textureData.textureId - (batchIndex << Context::s_batchBitsNum)) : -1;
+            int texUnitIndex = int(textureData.textureId - (batchIndex << Context::s_batchBitsNum));
+            texUnitIndex = textureData.textureId ? texUnitIndex : -1;
+            m_bufData.textures[index] = texUnitIndex;
             Mat4* m = m_bufData.matrices + index;
             *m = m_parentMatrices[depth] = m_parentMatrices[depth - 1] * DisplayObject::_getTransform(spatial, order);
+            // z order of an object is given in global space so we prevent concatenation with parent's z
+            m_parentMatrices[depth].zt(0);
             m_lastDepth = depth;
             m_lastIndex = index;
+            m_lastBatchIndex = batchIndex;
         }
                 
     private:
@@ -74,6 +83,7 @@ namespace {
         int& m_lastIndex;
         BufferData& m_bufData;
         int* m_offsets;
+        unsigned m_lastBatchIndex{0};
     };
 }
 
@@ -102,7 +112,7 @@ void RenderBufferOrganizer::organize(flash::display::DisplayObject& stage, Stack
     // offset for each batch
     int* offsets = (int*) allocator.alloc(sizeof(int) * numTextures);
     offsets[0] = 0;
-    for (int i = 1; i < numTextures + 1; ++i) {
+    for (int i = 1; i < bufData.numDraws; ++i) {
         offsets[i] = offsets[i - 1] + batchSizes[i - 1];
     }
 
