@@ -249,6 +249,8 @@ void Context::init(unsigned width, unsigned height) {
     h = height;
     glfwHideWindow(window);
     prepareOffscreenBuffer();
+    glClearColor(0.2, 0.2, 0.2, 1);
+    glClearDepth(1.0f);
 #else
 //    const GLubyte* renderer = glGetString(GL_RENDERER);
 //    const GLubyte* version = glGetString(GL_VERSION);
@@ -265,10 +267,7 @@ void Context::init(unsigned width, unsigned height) {
 
     program.init();
     program.activate(nullptr);
-    
-    glClearColor(0.1, 0.1, 0.1, 1);
-    glClearDepth(1.0f);
-    
+
     std::vector<int> samplers((unsigned long) s_maxTextureUnits);
     for (int i = 0; i < s_maxTextureUnits; ++i)
         samplers[i] = i;
