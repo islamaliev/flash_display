@@ -41,6 +41,7 @@ void Stage::init() {
     if (!_isInitialized) {
         _isInitialized = true;
         s_context->init((unsigned) width(), (unsigned) height());
-        s_context->setProjection(Mat4::orthographicProjection(0, width(), 0, height(), -1, 20));
+        // TODO: max depth (far) should be configurable of calculated in more sophisticated way
+        s_context->setProjection(Mat4::orthographicProjection(0, width(), 0, height(), -1, 1000));
     }
 }

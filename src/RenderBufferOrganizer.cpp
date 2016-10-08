@@ -17,10 +17,9 @@ using StackAllocator = allocator::StackAllocator;
 namespace {
     class ForEachTextureDataIterator {
     public:
-        ForEachTextureDataIterator(int& numLeafComponents, unsigned* batchSizes, int& lastDepth, unsigned& numDraws)
+        ForEachTextureDataIterator(int& numLeafComponents, unsigned* batchSizes, unsigned& numDraws)
             : m_numLeafComponents(numLeafComponents)
             , m_batchSizes(batchSizes)
-            , m_lastDepth(lastDepth)
             , m_numDraws(numDraws){}
         
         void operator()(TextureData& textureData, int depth) {
@@ -39,17 +38,15 @@ namespace {
     private:
         int& m_numLeafComponents;
         unsigned* m_batchSizes;
-        int& m_lastDepth;
         unsigned& m_numDraws;
+        int m_lastDepth{1};
         unsigned m_lastBatchIndex{0};
     };
     
     class ForEachIterator {
     public:
-        ForEachIterator(Mat4* parentMatrices, int& lastDepth, int& lastIndex, BufferData& bufData, int* offsets)
+        ForEachIterator(Mat4* parentMatrices, BufferData& bufData, int* offsets)
             : m_parentMatrices(parentMatrices)
-            , m_lastDepth(lastDepth)
-            , m_lastIndex(lastIndex)
             , m_bufData(bufData)
             , m_offsets(offsets) {}
         
@@ -59,7 +56,7 @@ namespace {
             auto batchIndex = textureData.textureId >> Context::s_batchBitsNum;
             bool toOverride = m_lastDepth == depth - 1;
             // TODO: check if conditional move is used here
-            auto index = toOverride ? m_lastIndex : m_offsets[batchIndex];
+            auto index = toOverride && m_lastBatchIndex == batchIndex ? m_lastIndex : m_offsets[batchIndex];
             // current batch offset advances once an object is added
             ++m_offsets[batchIndex];
             m_offsets[m_lastBatchIndex] -= toOverride;
@@ -79,10 +76,10 @@ namespace {
                 
     private:
         Mat4* m_parentMatrices;
-        int& m_lastDepth;
-        int& m_lastIndex;
         BufferData& m_bufData;
         int* m_offsets;
+        int m_lastDepth{1};
+        int m_lastIndex{0};
         unsigned m_lastBatchIndex{0};
     };
 }
@@ -100,12 +97,20 @@ void RenderBufferOrganizer::organize(flash::display::DisplayObject& stage, Stack
     unsigned* batchSizes = (unsigned*) allocator.alloc(sizeof(unsigned) * numTextures);
     memset(batchSizes, 0, sizeof(unsigned) * numTextures);
 
-    int lastDepth = 1;
     int numLeafComponents = 0;
     unsigned numDraws = 0;
 
-    components.forEachTextureData(ForEachTextureDataIterator(numLeafComponents, batchSizes, lastDepth, numDraws));
+    components.forEachTextureData(ForEachTextureDataIterator(numLeafComponents, batchSizes, numDraws));
 
+    // this is a work around. We emulate that first batch has one more object than it needs.
+    // It's necessary because container objects also fall into first batch (since theirs texture is 0).
+    // Container aren't present in the final result but during calculation we put the in the same array.
+    // When, for example, first batch is fully set (and at least fist object from the second batch) then
+    // when next container is encountered it's set to the next slot of first batch which is at that moment
+    // first element of the second batch (since first one is full). That's why we need additional slot in
+    // the first batch. Matrix for this object needs to be set to 0 so that it's not being drawn.
+    ++numLeafComponents;
+    ++batchSizes[0];
     bufData.batchSizes = batchSizes;
     bufData.numDraws = numDraws + 1;
 
@@ -122,8 +127,7 @@ void RenderBufferOrganizer::organize(flash::display::DisplayObject& stage, Stack
     bufData.matrices = (Mat4*) allocator.alloc(sizeof(Mat4) * numLeafComponents);
     bufData.textures = (int*) allocator.alloc(sizeof(Context::TextureIndexType) * numLeafComponents);
 
-    lastDepth = 1;
-    int lastIndex = 0;
+    memset(bufData.matrices + batchSizes[0] - 1, 0, sizeof(Mat4));
     
-    components.forEach(ForEachIterator(parentMatrices, lastDepth, lastIndex, bufData, offsets));
+    components.forEach(ForEachIterator(parentMatrices, bufData, offsets));
 }

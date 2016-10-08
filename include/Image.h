@@ -12,6 +12,9 @@ namespace display {
     class Image : public DisplayObject {
     public:
         void setTexture(Texture* texture);
+        
+        const Texture* texture() const { return m_texture; }
+        Texture* texture() { return m_texture; }
 
         void preRender(flash::render::RenderState&) override;
 

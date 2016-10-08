@@ -88,6 +88,24 @@ void Program::init() {
             fragment.tc.y = 1 - position.y;
             fragment.u_textureIndex = u_useTexture;
             gl_Position = u_projection * transform * vec4(position, 1.0);
+            
+            /*fragment.tc.x = position.x;
+            fragment.tc.y = 1 - position.y;
+            fragment.u_textureIndex = u_useTexture;
+			int x = gl_VertexID % 2;
+			int y = gl_VertexID / 2;
+			
+			int xOffset = gl_InstanceID % 4;
+			int yOffset = gl_InstanceID / 4;
+			xOffset *= 10;
+			yOffset *= 10;
+
+			mat4 m;
+			m[0] = vec4(5, 0, 0, 0);
+			m[1] = vec4(0, 5, 0, 0);
+			m[2] = vec4(0, 0, 1, 0);
+			m[3] = vec4(x + xOffset, y + yOffset, 0, 1);
+			gl_Position = u_projection * m * vec4(position, 1.0);*/
         })shaderCode";
 
     const std::string& fragShaderCode = R"shaderCode(
