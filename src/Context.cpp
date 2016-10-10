@@ -242,7 +242,8 @@ void Context::init(unsigned width, unsigned height) {
     glfwMakeContextCurrent(window);
 
     glewExperimental = GL_TRUE;
-    assert(glewInit() == GLEW_OK);
+    GLenum status = glewInit();
+    assert(status == GLEW_OK);
 
 #ifdef OFFSCREEN
     w = width;
