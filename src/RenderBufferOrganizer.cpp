@@ -28,11 +28,10 @@ namespace {
             bool toOverride = m_lastDepth == depth - 1;
             m_lastDepth = depth;
             m_numLeafComponents += !toOverride;
-            auto batchIndex = textureData.textureId  >> Context::s_batchBitsNum;
-            ++m_batchSizes[batchIndex];
-            m_batchSizes[m_lastBatchIndex] -= toOverride;
-            m_numDraws = m_numDraws < batchIndex ? batchIndex : m_numDraws;
-            m_lastBatchIndex = batchIndex;
+            auto batchIndex = textureData.textureId >> Context::s_batchBitsNum;
+            batchIndex = textureData.textureId > 0 ? batchIndex : 0;
+            m_batchSizes[batchIndex] += int(bool(textureData.textureId));
+            m_numDraws = m_numDraws < batchIndex ? (unsigned) batchIndex : m_numDraws;
         }
         
     private:
@@ -40,7 +39,6 @@ namespace {
         unsigned* m_batchSizes;
         unsigned& m_numDraws;
         int m_lastDepth{1};
-        unsigned m_lastBatchIndex{0};
     };
     
     class ForEachIterator {
@@ -53,34 +51,49 @@ namespace {
         void operator()(SpatialComponent& spatial, TextureData& textureData, int depth, int order) {
             if (depth <= 0)
                 return;
+            // TODO: check if conditional move is used everywhere
             auto batchIndex = textureData.textureId >> Context::s_batchBitsNum;
+            // shapes with texture id == -1 go to first batch
+            batchIndex = textureData.textureId > 0 ? batchIndex : 0;
             bool toOverride = m_lastDepth == depth - 1;
-            // TODO: check if conditional move is used here
-            auto index = toOverride && m_lastBatchIndex == batchIndex ? m_lastIndex : m_offsets[batchIndex];
-            // current batch offset advances once an object is added
-            ++m_offsets[batchIndex];
-            m_offsets[m_lastBatchIndex] -= toOverride;
-            // for shapes the index is -1 so that it can be checked in ths frag shader
-            // all other indices must be from 0 to GL_MAX_TEXTURE_IMAGE_UNITS
-            int texUnitIndex = int(textureData.textureId - (batchIndex << Context::s_batchBitsNum));
-            texUnitIndex = textureData.textureId ? texUnitIndex : -1;
-            m_bufData.textures[index] = texUnitIndex;
-            Mat4* m = m_bufData.matrices + index;
-            *m = m_parentMatrices[depth] = m_parentMatrices[depth - 1] * DisplayObject::_getTransform(spatial, order);
-            // z order of an object is given in global space so we prevent concatenation with parent's z
-            m_parentMatrices[depth].zt(0);
+    
+            // containers are ignorant to batches because they always have textureId == 0, so when toOverride
+            // is set we need to make sure current object also falls into first batch, otherwise we ignore override
+            auto index = toOverride && !batchIndex ? m_lastIndex : m_offsets[batchIndex];
+            // we advance batch offset only for leaf nodes (for container increment is 0)
+            m_offsets[batchIndex] += int(bool(textureData.textureId));
+            
+            setTextureId(textureData.textureId, batchIndex, index);
+            setMatrix(textureData.textureId, index, depth, order, spatial);
+            
             m_lastDepth = depth;
             m_lastIndex = index;
-            m_lastBatchIndex = batchIndex;
         }
                 
     private:
+        inline void setTextureId(int textureId, int batchIndex, int index) {
+            int texUnitIndex = textureId - (batchIndex << Context::s_batchBitsNum);
+            texUnitIndex = textureId > 0 ? texUnitIndex : textureId;
+            // dummy int to channel texUnitIndex for containers
+            int dummyTexUnit;
+            int* textUnitP = textureId ? m_bufData.textures + index : &dummyTexUnit;
+            *textUnitP = texUnitIndex;
+        }
+        
+        inline void setMatrix(int textureId, int index, int depth, int order, const SpatialComponent& spatial) {
+            Mat4* currentMatP = m_parentMatrices + depth;
+            // for containers m == currentMatP so that buffer matrices are untouched
+            Mat4* m = textureId ? m_bufData.matrices + index : currentMatP;
+            *m = *currentMatP = m_parentMatrices[depth - 1] * DisplayObject::_getTransform(spatial, order);
+            // z order of an object is given in global space so we prevent concatenation with parent's z
+            m_parentMatrices[depth].zt(0);
+        }
+        
         Mat4* m_parentMatrices;
         BufferData& m_bufData;
         int* m_offsets;
         int m_lastDepth{1};
         int m_lastIndex{0};
-        unsigned m_lastBatchIndex{0};
     };
 }
 
@@ -101,16 +114,6 @@ void RenderBufferOrganizer::organize(flash::display::DisplayObject& stage, Stack
     unsigned numDraws = 0;
 
     components.forEachTextureData(ForEachTextureDataIterator(numLeafComponents, batchSizes, numDraws));
-
-    // this is a work around. We emulate that first batch has one more object than it needs.
-    // It's necessary because container objects also fall into first batch (since theirs texture is 0).
-    // Container aren't present in the final result but during calculation we put the in the same array.
-    // When, for example, first batch is fully set (and at least fist object from the second batch) then
-    // when next container is encountered it's set to the next slot of first batch which is at that moment
-    // first element of the second batch (since first one is full). That's why we need additional slot in
-    // the first batch. Matrix for this object needs to be set to 0 so that it's not being drawn.
-    ++numLeafComponents;
-    ++batchSizes[0];
     bufData.batchSizes = batchSizes;
     bufData.numDraws = numDraws + 1;
 
@@ -127,7 +130,5 @@ void RenderBufferOrganizer::organize(flash::display::DisplayObject& stage, Stack
     bufData.matrices = (Mat4*) allocator.alloc(sizeof(Mat4) * numLeafComponents);
     bufData.textures = (int*) allocator.alloc(sizeof(Context::TextureIndexType) * numLeafComponents);
 
-    memset(bufData.matrices + batchSizes[0] - 1, 0, sizeof(Mat4));
-    
     components.forEach(ForEachIterator(parentMatrices, bufData, offsets));
 }

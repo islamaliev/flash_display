@@ -16,9 +16,9 @@ using DisplayObject = flash::display::DisplayObject;
 using namespace flash;
 using namespace render;
 
-// these default values are for offset renderer
-int Context::s_maxTextureUnits = 2;
-int Context::s_batchBitsNum = 1;
+int Context::s_batchBitsNum = 0;
+// this default value are for offset renderer
+int Context::s_maxTextureUnits = 8;
 
 namespace {
     Program program;
@@ -42,13 +42,13 @@ namespace {
 
     void _init() {
 #ifndef OFFSCREEN
-        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &Context::s_maxTextureUnits);
+//        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &Context::s_maxTextureUnits);
+#endif
         Context::s_batchBitsNum = 0;
         auto i = Context::s_maxTextureUnits;
         while (i >>= 1)
             ++Context::s_batchBitsNum;
 //        printf("GL_MAX_TEXTURE_IMAGE_UNITS = %d\n", Context::s_maxTextureUnits);
-#endif
     }
 
     void _clear() {

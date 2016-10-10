@@ -23,7 +23,7 @@ namespace flash {
 
     struct TextureData {
         unsigned color{0};
-        unsigned textureId{0};
+        int textureId{0};
     };
 
     class ComponentContainer {
