@@ -276,7 +276,7 @@ void Context::init(unsigned width, unsigned height) {
 }
 
 void Context::start(DisplayObject& stage) {
-    while (!glfwWindowShouldClose(window)) {
+//    while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 #ifdef OFFSCREEN
@@ -305,8 +305,8 @@ void Context::start(DisplayObject& stage) {
 #else
         glfwSwapBuffers(window);
 #endif
-    }
-    dispose();
+//    }
+//    dispose();
 }
 
 void Context::stop() {

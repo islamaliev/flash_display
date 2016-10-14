@@ -31,7 +31,9 @@ set(${PROJECT_NAME}_INCLUDE_DIRS
 
 include_directories(${${PROJECT_NAME}_INCLUDE_DIRS})
 
-file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
+file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/*.mm
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/*.m)
 
 add_library(${TARGET_NAME} ${SOURCES})
 set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
