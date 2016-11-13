@@ -16,9 +16,15 @@ set(${PROJECT_NAME}_OFFSCREEN_TARGET_NAME ${OFFSCREEN_TARGET_NAME}
 
 set(DEPENDENCIES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies)
 
-include(glfw)
+include_directories(/System/Library/Frameworks)
+find_library(COCOA_LIBRARY Cocoa)
+find_library(COREVIDEO_LIBRARY CoreVideo)
+find_library(OpenGL_LIBRARY OpenGL)
+mark_as_advanced(COCOA_LIBRARY GLUT_LIBRARY OpenGL_LIBRARY)
+set(EXTRA_LIBS ${COCOA_LIBRARY} ${COREVIDEO_LIBRARY} ${GLUT_LIBRARY} ${OpenGL_LIBRARY})
 
 include(jpeg)
+include(png)
 
 set(MATH_LIB flash_math)
 add_subdirectory(${DEPENDENCIES_DIR}/${MATH_LIB})
@@ -37,13 +43,12 @@ file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
 
 add_library(${TARGET_NAME} ${SOURCES})
 set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
-link_glfw(${TARGET_NAME})
 link_jpeg(${TARGET_NAME})
-target_link_libraries(${TARGET_NAME} ${MATH_LIB_TARGET_NAME})
+target_link_libraries(${TARGET_NAME} ${MATH_LIB_TARGET_NAME} ${EXTRA_LIBS})
 
 add_library(${OFFSCREEN_TARGET_NAME} ${SOURCES})
 set_target_properties(${OFFSCREEN_TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 target_compile_definitions(${OFFSCREEN_TARGET_NAME} PRIVATE OFFSCREEN=1)
-link_glfw(${OFFSCREEN_TARGET_NAME})
-link_jpeg(${OFFSCREEN_TARGET_NAME})
-target_link_libraries(${OFFSCREEN_TARGET_NAME} ${MATH_LIB_TARGET_NAME})
+link_jpeg(${OFFSCREEN_TARGET_NAME} ${EXTRA_LIBS})
+link_png(${OFFSCREEN_TARGET_NAME} ${EXTRA_LIBS})
+target_link_libraries(${OFFSCREEN_TARGET_NAME} ${MATH_LIB_TARGET_NAME} ${EXTRA_LIBS})

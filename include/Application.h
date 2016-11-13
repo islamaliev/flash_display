@@ -11,16 +11,19 @@ namespace ui {
             return app;
         }
         
-        int run();
+        int run(void(*initF)(void), void(*updateF)(void));
+        
+        bool isRunning() const;
+        
+        void stop();
+        
+        void swap();
+        
+        void* m_data{nullptr};
         
     private:
         Application();
-        
-        friend class Window;
-        
-        void* m_data{nullptr};
     };
-    
 }
     
 }

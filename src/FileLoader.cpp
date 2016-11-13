@@ -2,10 +2,9 @@
 #include <istream>
 #include <fstream>
 
-#include <GL/glew.h>
 #include <jpeglib.h>
-#include <Color.h>
-#include <Texture.h>
+#include "Color.h"
+#include "Texture.h"
 
 
 using namespace flash::filesystem;
@@ -17,9 +16,6 @@ namespace {
     Texture* decodeData(const char* FileName) {
         unsigned long x, y;
 
-        unsigned long data_size;
-        int channels;
-        unsigned int type;
         unsigned char * rowptr[1];
 
         struct jpeg_decompress_struct info;
@@ -42,19 +38,13 @@ namespace {
 
         x = info.output_width;
         y = info.output_height;
-        channels = info.num_components;
-        type = GL_RGB;
-        if(channels == 4) type = GL_RGBA;
-
-        data_size = x * y * 3;
 
         Texture* texture = new flash::display::Texture(x, y);
 
         unsigned char * jdata = (unsigned char*) texture->data();
         while (info.output_scanline < info.output_height) // loop
         {
-            rowptr[0] = (unsigned char*) jdata
-                       + 3 * info.output_width * info.output_scanline;
+            rowptr[0] = jdata + 3 * info.output_width * info.output_scanline;
 
             jpeg_read_scanlines(&info, rowptr, 1);
         }
