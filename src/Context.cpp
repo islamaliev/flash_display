@@ -43,9 +43,6 @@ namespace {
     };
 
     void _init() {
-#ifndef OFFSCREEN
-        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &Context::s_maxTextureUnits);
-#endif
         Context::s_batchBitsNum = 0;
         auto i = Context::s_maxTextureUnits;
         while (i >>= 1)
@@ -121,136 +118,77 @@ namespace {
             batchOffset += batchSize;
         }
     }
+    
+    void _onAppInit();
 }
 
-#ifdef OFFSCREEN
-#include <png.h>
-
-extern const char* nextOffscreen();
+#ifndef OFFSCREEN
+namespace {
+    
+    bool _sync = false;
+    
+    void _onAppVSync() {
+        _sync = true;
+    }
+    
+    class RenderMediator {
+    public:
+        void appInit() {
+//          const GLubyte* renderer = glGetString(GL_RENDERER);
+//          const GLubyte* version = glGetString(GL_VERSION);
+//          printf("Renderer: %s\n", renderer);
+//          printf("OpenGL version supported %s\n", version);
+            glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &Context::s_maxTextureUnits);
+            glReadBuffer(GL_BACK);
+        }
+        
+        void initWindow(unsigned width, unsigned height) {
+            Application::instance().run(&_onAppInit, &_onAppVSync);
+        }
+        
+        bool preRender() {
+            return _sync;
+        }
+        
+        void postRender() {
+            Application::instance().swap();
+            _sync = false;
+        }
+        
+        void dispose() {
+        }
+    };
+}
+#else
+#include "OffscreenRenderering.h"
+#endif
 
 namespace {
-
-    GLuint _fbo = 0;
-    GLuint _renderBuffer = 0;
-
-    unsigned _w;
-    unsigned _h;
-
-    enum Constants { SCREENSHOT_MAX_FILENAME = 256 };
-
-    void prepareOffscreenBuffer() {
-        glGenFramebuffers(1, &_fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-
-        glGenRenderbuffers(1, &_renderBuffer);
-        glBindRenderbuffer(GL_RENDERBUFFER, _renderBuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB8, _w, _h);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, _renderBuffer);
-
-        assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-
-        int glget;
-        glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &glget);
-        assert(_w * _h < (unsigned int) glget);
-    }
-
-    void savePNG(const char *filename) {
-        size_t i, nvals;
-        const size_t format_nchannels = 3;
-        nvals = format_nchannels * _w * _h;
-        FILE *f = fopen(filename, "wb");
-
-        if (!f) {
-            printf("Error opening output png file %s\n", filename );
-            return;
-        }
-
-        GLubyte* pixels = (GLubyte*) malloc(nvals * sizeof(GLubyte));
-        png_byte* png_bytes = (png_byte*) malloc(nvals * sizeof(png_byte));
-        png_byte** png_rows = (png_byte**) malloc(_h * sizeof(png_byte*));
-        glReadPixels(0, 0, _w, _h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-        for (i = 0; i < nvals; i++)
-            (png_bytes)[i] = (pixels)[i];
-        for (i = 0; i < _h; i++)
-            (png_rows)[_h - i - 1] = &(png_bytes)[i * _w * format_nchannels];
-        png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-        if (!png) abort();
-        png_infop info = png_create_info_struct(png);
-        if (!info) abort();
-        if (setjmp(png_jmpbuf(png))) abort();
-        png_init_io(png, f);
-        png_set_IHDR(
-                png,
-                info,
-                _w,
-                _h,
-                8,
-                PNG_COLOR_TYPE_RGB,
-                PNG_INTERLACE_NONE,
-                PNG_COMPRESSION_TYPE_DEFAULT,
-                PNG_FILTER_TYPE_DEFAULT
-        );
-        png_write_info(png, info);
-        png_write_image(png, png_rows);
-        png_write_end(png, NULL);
-        free(pixels);
-        free(png_bytes);
-        free(png_rows);
-        fclose(f);
-    }
-
-    void saveOffscreen(const char* name) {
-        glFlush();
-        char filename[SCREENSHOT_MAX_FILENAME];
-        strcpy(filename, name);
-        strcat(filename, ".png");
-        savePNG(filename);
-    }
-}
-#endif
-
-bool _sync = false;
-
-void _onAppVSync() {
-    _sync = true;
-}
-
-void _onAppInit() {
-    printf("_onAppInit\n");
+    RenderMediator _renderMediator;
     
-#ifdef OFFSCREEN
-    prepareOffscreenBuffer();
-    glClearColor(0.2, 0.2, 0.2, 1);
-    glClearDepth(1.0f);
-#else
-//    const GLubyte* renderer = glGetString(GL_RENDERER);
-//    const GLubyte* version = glGetString(GL_VERSION);
-//    printf("Renderer: %s\n", renderer);
-//    printf("OpenGL version supported %s\n", version);
-    glReadBuffer(GL_BACK);
-#endif
-
-    _init();
-    _initVAO();
-
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-
-    program.init();
-    program.activate(nullptr);
-    
-    std::vector<int> samplers((unsigned long) Context::s_maxTextureUnits);
-    for (int i = 0; i < Context::s_maxTextureUnits; ++i)
-        samplers[i] = i;
-    program.setUniform("u_textures", samplers.data(), Context::s_maxTextureUnits);
+    void _onAppInit() {
+        printf("_onAppInit\n");
+        
+        _renderMediator.appInit();
+        
+        _init();
+        _initVAO();
+        
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+        
+        program.init();
+        program.activate(nullptr);
+        
+        std::vector<int> samplers((unsigned long) Context::s_maxTextureUnits);
+        for (int i = 0; i < Context::s_maxTextureUnits; ++i)
+            samplers[i] = i;
+        program.setUniform("u_textures", samplers.data(), Context::s_maxTextureUnits);
+    }
 }
 
 void Context::init(unsigned width, unsigned height) {
-#ifdef OFFSCREEN
-    _w = width;
-    _h = height;
-#endif
-    Application::instance().run(&_onAppInit, &_onAppVSync);
+    _renderMediator.initWindow(width, height);
 }
 
 void Context::start(DisplayObject& stage) {
@@ -260,17 +198,9 @@ void Context::start(DisplayObject& stage) {
     while (app.isRunning()) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-#ifdef OFFSCREEN
-        glViewport(0, 0, _w, _h);
-        const char* name = nextOffscreen();
-        if (strlen(name) == 0) {
+        if (!_renderMediator.preRender())
             continue;
-        }
-#else
-        if (!_sync)
-            continue;
-#endif
-
+        
         _frameAllocator.clear();
 
         RenderState renderState;
@@ -281,12 +211,7 @@ void Context::start(DisplayObject& stage) {
 
         _draw(bufData);
 
-#ifdef OFFSCREEN
-        saveOffscreen(name);
-#else
-        app.swap();
-        _sync = false;
-#endif
+        _renderMediator.postRender();
     }
     
     dispose();
@@ -299,10 +224,7 @@ void Context::stop() {
 void Context::dispose() {
     glDeleteVertexArrays(1, &_vao);
     program.dispose();
-#ifdef OFFSCREEN
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDeleteRenderbuffers(1, &_fbo);
-#endif
+    _renderMediator.dispose();
 }
 
 void Context::setProjection(const flash::math::Mat4& matrix) {
