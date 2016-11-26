@@ -34,7 +34,7 @@ void DisplayObjectContainer::addChildAt(DisplayObject* child, unsigned index) {
 
 void DisplayObjectContainer::removeChildren() {
     _alterTreeSizeBy(1 - treeSize());
-    for (auto& child : m_children) {
+    for (auto child : m_children) {
         child->_resetDepth();
         child->_setParent(nullptr);
     }
@@ -43,14 +43,14 @@ void DisplayObjectContainer::removeChildren() {
 
 void DisplayObjectContainer::_resetDepth() {
     DisplayObject::_resetDepth();
-    for (auto& child : m_children) {
+    for (auto child : m_children) {
         child->_resetDepth();
     }
 }
 
 void DisplayObjectContainer::_resetOrderIndex() {
     DisplayObject::_resetOrderIndex();
-    for (auto& child : m_children) {
+    for (auto child : m_children) {
         child->_resetOrderIndex();
     }
 }
@@ -58,7 +58,7 @@ void DisplayObjectContainer::_resetOrderIndex() {
 void DisplayObjectContainer::_updateDepth(int parentDepth) {
     DisplayObject::_updateDepth(parentDepth);
     int d = depth();
-    for (auto& child : m_children) {
+    for (auto child : m_children) {
         child->_updateDepth(d);
     }
 }
@@ -100,4 +100,13 @@ void DisplayObjectContainer::preRender(flash::render::RenderState& renderState) 
 
 Rectangle DisplayObjectContainer::getBounds(DisplayObject* targetSpace) const {
     return Rectangle();
+}
+
+void DisplayObjectContainer::destroy() {
+    for (auto child : m_children) {
+        child->_setParent(nullptr);
+        child->destroy();
+    }
+    m_children.clear();
+    DisplayObject::destroy();
 }

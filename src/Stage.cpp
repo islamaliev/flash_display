@@ -45,3 +45,12 @@ void Stage::init() {
         s_context->setProjection(Mat4::orthographicProjection(0, width(), 0, height(), -1, 1000));
     }
 }
+
+void Stage::clear() {
+    _alterTreeSizeBy(1 - treeSize());
+    for (auto child : m_children) {
+        child->_setParent(nullptr);
+        child->destroy();
+    }
+    m_children.clear();
+}

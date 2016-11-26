@@ -101,3 +101,10 @@ void ComponentContainer::sort() {
         }
     }
 }
+
+void ComponentContainer::clear() {
+    // stage has index 1 so the next one is 2
+    m_nextIndex = 2;
+    m_negativeOrdersNum = 0;
+    m_freeEntities.clear();
+}

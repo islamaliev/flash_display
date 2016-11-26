@@ -86,6 +86,8 @@ namespace display {
         int treeSize() const { return m_treeSize; }
 
         int orderIndex() const;
+    
+        virtual void destroy();
 
     protected:
         static render::Context* s_context;

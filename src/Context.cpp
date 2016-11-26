@@ -167,8 +167,6 @@ namespace {
     RenderMediator _renderMediator;
     
     void _onAppInit() {
-        printf("_onAppInit\n");
-        
         _renderMediator.appInit();
         
         _init();

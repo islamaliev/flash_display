@@ -108,6 +108,10 @@ void DisplayObject::_alterTreeSizeBy(int value) {
         m_parent->_alterTreeSizeBy(value);
 }
 
+void DisplayObject::destroy() {
+    delete this;
+}
+
 flash::ComponentContainer& DisplayObject::_getComponents() {
     return *s_components;
 }

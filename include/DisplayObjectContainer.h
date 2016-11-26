@@ -42,6 +42,8 @@ namespace display {
         }
 
         void removeChildren();
+        
+        void destroy() override;
 
         std::size_t getChildIndex(DisplayObject* child) const {
             const auto& beg = m_children.cbegin();

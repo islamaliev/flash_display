@@ -6,6 +6,9 @@
 using namespace flash;
 using namespace ui;
 
+//#define LOG(str) NSLog(@str)
+#define LOG(str)
+
 @interface ApplicationDelegate : NSObject <NSApplicationDelegate, NSWindowDelegate> {
 }
 @end
@@ -35,7 +38,8 @@ using namespace ui;
 }
 
 - (void) applicationWillFinishLaunching: (NSNotification*) notification {
-    NSLog(@"ApplicationDelegate::applicationWillFinishLaunching()");
+    LOG("ApplicationDelegate::applicationWillFinishLaunching()");
+
     MacOSXAppData* appData = (MacOSXAppData*) (Application::instance().m_data);
 
 #ifdef OFFSCREEN
@@ -80,12 +84,12 @@ using namespace ui;
 }
 
 - (void) applicationDidFinishLaunching: (NSNotification*) notification {
-    NSLog(@"ApplicationDelegate::applicationDidFinishLaunching()");
+    LOG("ApplicationDelegate::applicationDidFinishLaunching()");
     [NSApp stop: self];
 }
 
 - (void) applicationWillTerminateLaunching: (NSNotification*) notification {
-    NSLog(@"ApplicationDelegate::applicationWillTerminateLaunching()");
+    LOG("ApplicationDelegate::applicationWillTerminateLaunching()");
     MacOSXAppData* appData = (MacOSXAppData*) (Application::instance().m_data);
     CGLSetCurrentContext(NULL);
     CGLDestroyContext(*appData->context);
@@ -93,27 +97,27 @@ using namespace ui;
 }
 
 - (void) windowDidUpdate: (NSNotification *) notification {
-    NSLog(@"ApplicationDelegate::windowDidUpdate()");
+    LOG("ApplicationDelegate::windowDidUpdate()");
 }
 
 - (void) windowDidBecomeMain: (NSNotification *) notification {
-    NSLog(@"ApplicationDelegate::windowDidBecomeMain()");
+    LOG("ApplicationDelegate::windowDidBecomeMain()");
 }
 
 - (void) windowDidResignMain: (NSNotification *) notification {
-    NSLog(@"ApplicationDelegate::windowDidResignMain()");
+    LOG("ApplicationDelegate::windowDidResignMain()");
 }
 
 - (void) windowWillClose: (NSNotification *) notification {
-    NSLog(@"ApplicationDelegate::windowWillClose()");
+    LOG("ApplicationDelegate::windowWillClose()");
 }
 
 - (void) windowDidBecomeKey: (NSNotification *) notification {
-    NSLog(@"ApplicationDelegate::windowDidBecomeKey()");
+    LOG("ApplicationDelegate::windowDidBecomeKey()");
 }
 
 - (void) windowDidResignKey: (NSNotification *) notification {
-    NSLog(@"ApplicationDelegate::windowDidResignKey()");
+    LOG("ApplicationDelegate::windowDidResignKey()");
 }
 
 - (void) dealloc {
@@ -175,7 +179,7 @@ static CVReturn OnVSync(CVDisplayLinkRef, const CVTimeStamp *, const CVTimeStamp
 @implementation OpenGLView
 
 - (id) initWithFrame: (NSRect) frame {
-    NSLog(@"OpenGLView::initWithFrame()");
+    LOG("OpenGLView::initWithFrame()");
     NSOpenGLPixelFormatAttribute pixelFormatAttributes[] = {
             NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,
             NSOpenGLPFAColorSize    , 24                           ,
