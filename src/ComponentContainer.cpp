@@ -36,8 +36,7 @@ void ComponentContainer::removeEntity(const Entity& e) {
     using std::swap;
     --m_nextIndex;
     m_freeEntities.push_back(e);
-    int swapIndex = m_dataIndexes[m_nextIndex];
-    int swapDataIndex = m_dataIndexes[swapIndex] = m_dataIndexes[e];
+    int swapDataIndex = m_dataIndexes[m_backIndexes[m_nextIndex]] = m_dataIndexes[e];
     m_comps[swapDataIndex] = m_comps[m_nextIndex];
     m_depths[swapDataIndex] = m_depths[m_nextIndex];
     m_textures[swapDataIndex] = m_textures[m_nextIndex];
