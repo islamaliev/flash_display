@@ -62,14 +62,14 @@ int& ComponentContainer::getOrderComponent(Entity e) {
 }
 
 void ComponentContainer::forEach(std::function<void(SpatialComponent&, TextureData&, int, int)> f) {
-    unsigned end = m_nextIndex - m_negativeOrdersNum;
+    int end = m_nextIndex - m_negativeOrdersNum;
     for (int i = 1; i < end; ++i) {
         f(m_comps[i], m_textures[i], m_depths[i], m_order[m_backIndexes[i]]);
     }
 }
 
 void ComponentContainer::forEachTextureData(std::function<void(TextureData&, int)> f) {
-    unsigned end = m_nextIndex - m_negativeOrdersNum;
+    int end = m_nextIndex - m_negativeOrdersNum;
     for (int i = 1; i < end; ++i) {
         f(m_textures[i], m_depths[i]);
     }
@@ -77,8 +77,8 @@ void ComponentContainer::forEachTextureData(std::function<void(TextureData&, int
 
 void ComponentContainer::sort() {
     using std::swap;
-    unsigned i = 0;
-    unsigned count = 1;
+    int i = 0;
+    int count = 1;
     m_negativeOrdersNum = 0;
     while (count < m_nextIndex) {
         ++i;

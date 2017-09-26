@@ -1,7 +1,7 @@
 #include <GL/glew.h>
 #include <cstdio>
 #include "Program.h"
-#include "Contex.h"
+#include "Context.h"
 #include <string>
 #include <Mat4.h>
 

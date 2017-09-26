@@ -1,6 +1,6 @@
 #include <RenderState.h>
 #include "DisplayObjectContainer.h"
-#include "Contex.h"
+#include "Context.h"
 
 using namespace flash::display;
 

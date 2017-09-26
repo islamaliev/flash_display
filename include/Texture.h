@@ -13,9 +13,9 @@ namespace display {
     class Texture {
     public:
         // TODO: move it to some kind of texture manager
-        static unsigned s_numTextures;
+        static int s_numTextures;
 
-        Texture(unsigned width, unsigned height);
+        Texture(int width, int height);
 
         Texture(const Texture& other) = delete;
         Texture& operator=(const Texture& other) = delete;
@@ -37,8 +37,8 @@ namespace display {
 
         void dispose();
 
-        unsigned width() const { return m_width; }
-        unsigned height() const { return m_height; }
+        int width() const { return m_width; }
+        int height() const { return m_height; }
 
         const Color* data() const { return m_data; }
         Color* data() { return m_data; }
@@ -49,8 +49,8 @@ namespace display {
 
     private:
         unsigned m_id{0};
-        unsigned m_width{0};
-        unsigned m_height{0};
+        int m_width{0};
+        int m_height{0};
         Color* m_data{nullptr};
 
     };

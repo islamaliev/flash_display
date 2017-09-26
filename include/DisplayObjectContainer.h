@@ -20,7 +20,7 @@ namespace display {
         std::size_t numChildren() const { return m_children.size(); }
 
         void addChild(DisplayObject* child) {
-            addChildAt(child, m_children.size());
+            addChildAt(child, static_cast<unsigned>(m_children.size()));
         }
 
         void addChildAt(DisplayObject* child, unsigned index);

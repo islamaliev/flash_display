@@ -1,6 +1,6 @@
-#include <Image.h>
+#include "Image.h"
 #include "DisplayObjectContainer.h"
-#include "Contex.h"
+#include "Context.h"
 #include "RenderState.h"
 
 using namespace flash::display;
@@ -33,11 +33,11 @@ void DisplayObject::preRender(flash::render::RenderState& renderState) {
     }
 }
 
-Mat4 DisplayObject::_getTransform(const SpatialComponent& spatial, int z) {
+Mat4 DisplayObject::_getTransform(const flash::SpatialComponent& spatial, int z) {
     Mat4 m;
     float xt = spatial.x - spatial.pivotX * spatial.scaleX;
     float yt = spatial.y - spatial.pivotY * spatial.scaleY;
-    m.translate(xt, yt, z);
+    m.translate(xt, yt, static_cast<float>(z));
     m.scale(spatial.width, spatial.height, 1);
     return m;
 }

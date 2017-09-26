@@ -1,5 +1,5 @@
 #include "Image.h"
-#include "Contex.h"
+#include "Context.h"
 #include "Texture.h"
 
 using namespace flash::display;
@@ -14,8 +14,8 @@ void Image::preRender(flash::render::RenderState& renderState) {
 void Image::setTexture(Texture* texture) {
     m_texture = texture;
     _setTextureId(m_texture->getId());
-    setActualWidth(texture->width());
-    setActualHeight(texture->height());
+    setActualWidth(static_cast<float>(texture->width()));
+    setActualHeight(static_cast<float>(texture->height()));
 }
 
 void Image::setWidth(float value) {

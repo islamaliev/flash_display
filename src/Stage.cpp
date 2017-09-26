@@ -1,7 +1,7 @@
 #include <Mat4.h>
 #include <RenderState.h>
 #include "Stage.h"
-#include "Contex.h"
+#include "Context.h"
 
 using namespace flash;
 using namespace display;
@@ -16,8 +16,8 @@ namespace {
 }
 
 Stage::Stage(unsigned width, unsigned height) {
-    _setWidth(width);
-    _setHeight(height);
+    _setWidth(static_cast<float>(width));
+    _setHeight(static_cast<float>(height));
     _setDepth(0);
     init();
 }

@@ -57,8 +57,8 @@ namespace flash {
         void sort();
 
     private:
-        unsigned m_nextIndex{1};
-        unsigned m_negativeOrdersNum{0};
+        int m_nextIndex{1};
+        int m_negativeOrdersNum{0};
         
         // TODO: use one big memory buffer instead several vectors
         std::vector<SpatialComponent> m_comps;

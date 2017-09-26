@@ -25,12 +25,13 @@ namespace {
         struct jpeg_decompress_struct info;
         struct jpeg_error_mgr err;
 
-        FILE* file = fopen(FileName, "rb");
+		FILE* file;
+		errno_t file_err = fopen_s(&file, FileName, "rb");
 
         info.err = jpeg_std_error(& err);
         jpeg_create_decompress(& info);
 
-        if(!file) {
+        if(file_err != 0) {
             fprintf(stderr, "Error reading JPEG file %s!", FileName);
             return 0;
         }

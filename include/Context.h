@@ -14,8 +14,8 @@ namespace render {
     struct BufferData {
         math::Mat4* matrices;
         int* textures;
-        unsigned* batchSizes;
-        unsigned numDraws;
+        int* batchSizes;
+        int numDraws;
     };
 
     class Context {
@@ -23,9 +23,9 @@ namespace render {
         static int s_maxTextureUnits;
         static int s_batchBitsNum;
     
-        using TextureIndexType = unsigned;
+        using TextureIndexType = int;
         
-        void init(unsigned width, unsigned height);
+        void init(int width, int height);
 
         void start(display::DisplayObject& displayObject);
 

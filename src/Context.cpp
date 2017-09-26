@@ -1,4 +1,4 @@
-#include "Contex.h"
+#include "Context.h"
 #include "GL/glew.h"
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -73,7 +73,7 @@ namespace {
             {
                 int units = Context::s_maxTextureUnits;
                 auto offset = drawIndex * units;
-                for (unsigned i = 0; i < Context::s_maxTextureUnits; ++i) {
+                for (int i = 0; i < Context::s_maxTextureUnits; ++i) {
                     if (i + offset) {
                         glActiveTexture(GL_TEXTURE0 + i);
                         glBindTexture(GL_TEXTURE_2D, i + offset);
@@ -97,7 +97,7 @@ namespace {
             glBufferSubData(GL_ARRAY_BUFFER, pointsSize,                texturesSize, bufData.textures + batchOffset);
             glBufferSubData(GL_ARRAY_BUFFER, pointsSize + texturesSize, matricesSize, bufData.matrices + batchOffset);
 
-            auto matRowSize = 4 * sizeof(float);
+            int matRowSize = static_cast<int>(4 * sizeof(float));
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
             glVertexAttribIPointer(1, 1, GL_INT, 0, (void*) pointsSize);
             auto matPoint = pointsSize + texturesSize;
@@ -172,9 +172,10 @@ namespace {
         size_t i, nvals;
         const size_t format_nchannels = 3;
         nvals = format_nchannels * w * h;
-        FILE *f = fopen(filename, "wb");
+		FILE* fileStream;
+		errno_t err = fopen_s(&fileStream, filename, "wb");
 
-        if (!f) {
+        if (err != 0) {
             printf("Error opening output png file %s\n", filename );
             return;
         }
@@ -193,7 +194,7 @@ namespace {
         png_infop info = png_create_info_struct(png);
         if (!info) abort();
         if (setjmp(png_jmpbuf(png))) abort();
-        png_init_io(png, f);
+        png_init_io(png, fileStream);
         png_set_IHDR(
                 png,
                 info,
@@ -211,20 +212,20 @@ namespace {
         free(pixels);
         free(png_bytes);
         free(png_rows);
-        fclose(f);
+        fclose(fileStream);
     }
 
     void saveOffscreen(const char* name) {
         glFlush();
         char filename[SCREENSHOT_MAX_FILENAME];
-        strcpy(filename, name);
-        strcat(filename, ".png");
+        strcpy_s(filename, SCREENSHOT_MAX_FILENAME, name);
+        strcat_s(filename, SCREENSHOT_MAX_FILENAME, ".png");
         savePNG(filename);
     }
 }
 #endif
 
-void Context::init(unsigned width, unsigned height) {
+void Context::init(int width, int height) {
     if (!glfwInit()) {
         fprintf(stderr, "ERROR: could not start GLFW3\n");
     }
@@ -250,7 +251,7 @@ void Context::init(unsigned width, unsigned height) {
     h = height;
     glfwHideWindow(window);
     prepareOffscreenBuffer();
-    glClearColor(0.2, 0.2, 0.2, 1);
+    glClearColor(0.2f, 0.2f, 0.2f, 1);
     glClearDepth(1.0f);
 #else
 //    const GLubyte* renderer = glGetString(GL_RENDERER);
