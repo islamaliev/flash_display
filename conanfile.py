@@ -1,17 +1,12 @@
 from conans import ConanFile, CMake
 
 
-class FlashmathConan(ConanFile):
+class FlashDisplayConan(ConanFile):
     name = "flash_display"
     version = "0.1"
     # license = "<Put the package license here>"
     # url = "<Package recipe repository url here"
     settings = "os", "compiler", "build_type", "arch"
-    #requirements = [
-        #"flash_math/0.1@islamaliev/testing",
-        #"glew/2.0.0@lasote/vcpkg",
-        #"libpng/1.6.23@lasote/stable"
-    #]
     options = {"shared": [True, False]}
     default_options = "shared=False"
     generators = "cmake"
