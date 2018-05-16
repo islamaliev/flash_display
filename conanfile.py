@@ -18,10 +18,10 @@ class FlashDisplayConan(ConanFile):
 
     def requirements(self):
         self.requires("flash_math/0.1@islamaliev/testing")
-        self.requires("glew/2.0.0@lasote/vcpkg")
-        self.requires("glfw3/3.2.1@lasote/vcpkg")
-        self.requires("libpng/1.6.23@lasote/stable")
-        self.requires("libjpeg/9a@Kaosumaru/stable")
+        self.requires("glew/2.1.0@bincrafters/stable")
+        self.requires("glfw/3.2.1@bincrafters/stable")
+        self.requires("libpng/1.6.34@bincrafters/stable")
+        self.requires("libjpeg/9c@bincrafters/stable")
 
     def build(self):
         cmake = CMake(self)
