@@ -1,77 +1,75 @@
 cmake_minimum_required(VERSION 2.8.4)
 project(flash_display)
 
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup()
-
-set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include
-        CACHE INTERNAL "${PROJECT_NAME}: Include Directories" FORCE)
-
-set(TARGET_NAME flash_display)
-set(OFFSCREEN_TARGET_NAME ${TARGET_NAME}_offscreen)
+if (CMAKE_SOURCE_DIR STREQUAL CMAME_CURRENT_SOURCE_DIR)
+    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+    conan_basic_setup(TARGETS)
+endif()
 
 find_package(OpenGL REQUIRED)
-set(GL_LIBRARIES ${OPENGL_LIBRARIES})
 
-include_directories(${INCLUDE_DIR} ${OPENGL_INCLUDE_DIRS})
-
-set(SOURCES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(SOURCES
-    ${INCLUDE_DIR}/Color.h
-    ${SOURCES_DIR}/ComponentContainer.cpp
-    ${INCLUDE_DIR}/ComponentContainer.h
-    ${SOURCES_DIR}/Context.cpp
-    ${INCLUDE_DIR}/Context.h
-    ${SOURCES_DIR}/DisplayObject.cpp
-    ${INCLUDE_DIR}/DisplayObject.h
-    ${SOURCES_DIR}/DisplayObjectContainer.cpp
-    ${INCLUDE_DIR}/DisplayObjectContainer.h
-    ${SOURCES_DIR}/FileLoader.cpp
-    ${INCLUDE_DIR}/FileLoader.h
-    ${SOURCES_DIR}/Image.cpp
-    ${INCLUDE_DIR}/Image.h
-    ${SOURCES_DIR}/Program.cpp
-    ${INCLUDE_DIR}/Program.h
-    ${INCLUDE_DIR}/Rectangle.h
-    ${SOURCES_DIR}/RenderBufferOrganizer.cpp
-    ${INCLUDE_DIR}/RenderBufferOrganizer.h
-    ${INCLUDE_DIR}/RenderState.h
-    ${INCLUDE_DIR}/Shape.h
-    ${SOURCES_DIR}/StackAllocator.cpp
-    ${INCLUDE_DIR}/StackAllocator.h
-    ${SOURCES_DIR}/Stage.cpp
-    ${INCLUDE_DIR}/Stage.h
-    ${SOURCES_DIR}/Texture.cpp
-    ${INCLUDE_DIR}/Texture.h
-)
+    "${SOURCE_DIR}/Color.h"
+    "${SOURCE_DIR}/ComponentContainer.cpp"
+    "${SOURCE_DIR}/ComponentContainer.h"
+    "${SOURCE_DIR}/Context.cpp"
+    "${SOURCE_DIR}/Context.h"
+    "${SOURCE_DIR}/DisplayObject.cpp"
+    "${SOURCE_DIR}/DisplayObject.h"
+    "${SOURCE_DIR}/DisplayObjectContainer.cpp"
+    "${SOURCE_DIR}/DisplayObjectContainer.h"
+    "${SOURCE_DIR}/FileLoader.cpp"
+    "${SOURCE_DIR}/FileLoader.h"
+    "${SOURCE_DIR}/Image.cpp"
+    "${SOURCE_DIR}/Image.h"
+    "${SOURCE_DIR}/Program.cpp"
+    "${SOURCE_DIR}/Program.h"
+    "${SOURCE_DIR}/Rectangle.h"
+    "${SOURCE_DIR}/RenderBufferOrganizer.cpp"
+    "${SOURCE_DIR}/RenderBufferOrganizer.h"
+    "${SOURCE_DIR}/RenderState.h"
+    "${SOURCE_DIR}/Shape.h"
+    "${SOURCE_DIR}/StackAllocator.cpp"
+    "${SOURCE_DIR}/StackAllocator.h"
+    "${SOURCE_DIR}/Stage.cpp"
+    "${SOURCE_DIR}/Stage.h"
+    "${SOURCE_DIR}/Texture.cpp"
+    "${SOURCE_DIR}/Texture.h")
 
-set(ALL_LIBS ${CONAN_LIBS} ${OPENGL_LIBRARIES})
+set(CMAKE_DEBUG_POSTFIX d)
 
-add_library(${TARGET_NAME} ${SOURCES})
-set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
-target_link_libraries(${TARGET_NAME} ${ALL_LIBS})
+set(ALL_LIBS ${OPENGL_LIBRARIES} CONAN_PKG::flash_math CONAN_PKG::glew CONAN_PKG::glfw CONAN_PKG::libpng 
+    CONAN_PKG::libjpeg)
 
+add_library(${PROJECT_NAME} ${SOURCES})
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(${PROJECT_NAME} ${ALL_LIBS})
+target_include_directories(${PROJECT_NAME} PUBLIC ${SOURCE_DIR} ${OPENGL_INCLUDE_DIRS})
+
+#set(OFFSCREEN_TARGET_NAME ${PROJECT_NAME}_offscreen)
 #add_library(${OFFSCREEN_TARGET_NAME} ${SOURCES})
 #set_target_properties(${OFFSCREEN_TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 #target_compile_definitions(${OFFSCREEN_TARGET_NAME} PRIVATE OFFSCREEN=1)
 #target_link_libraries(${OFFSCREEN_TARGET_NAME} ${ALL_LIBS})
+#target_include_directories(${OFFSCREEN_TARGET_NAME} PUBLIC ${SOURCE_DIR} ${OPENGL_INCLUDE_DIRS})
 
-add_executable(try main.cpp)
+#add_executable(try main.cpp)
 #target_link_libraries(try ${OFFSCREEN_TARGET_NAME} ${ALL_LIBS})
-target_link_libraries(try ${TARGET_NAME} ${ALL_LIBS})
+#target_link_libraries(try ${PROJECT_NAME} ${ALL_LIBS})
 
-set(DLL_FILES "")
+#set(DLL_FILES "")
 
-foreach(BIN_DIR ${CONAN_BIN_DIRS})
-	file(GLOB files "${BIN_DIR}/*.dll")
-	if (files)
-		list(APPEND DLL_FILES ${files})
-	endif(files)
-endforeach(BIN_DIR)
+#foreach(BIN_DIR ${CONAN_BIN_DIRS})
+#file(GLOB files "${BIN_DIR}/*.dll")
+#if (files)
+#list(APPEND DLL_FILES ${files})
+#endif(files)
+#endforeach(BIN_DIR)
 
-foreach(DLL_FILE ${DLL_FILES})
-	add_custom_command(TARGET try POST_BUILD
-	    COMMAND ${CMAKE_COMMAND} -E copy_if_different 
-        ${DLL_FILE} 
-        $<TARGET_FILE_DIR:try>)
-endforeach(DLL_FILE)
+#foreach(DLL_FILE ${DLL_FILES})
+#add_custom_command(TARGET try POST_BUILD
+#COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+#${DLL_FILE} 
+#$<TARGET_FILE_DIR:try>)
+#endforeach(DLL_FILE)

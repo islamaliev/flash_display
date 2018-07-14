@@ -40,4 +40,12 @@ class FlashDisplayConan(ConanFile):
         self.copy("*.a", dst="lib", keep_path=False)
 
     def package_info(self):
-        self.cpp_info.libs = ["flash_display"]
+        libs = ['flash_display']
+
+        self.cpp_info.libs = []
+        for lib in libs:
+            if self.settings.os == "Windows" and self.settings.build_type == "Debug":
+                suffix = "d"
+            else:
+                suffix = ""
+            self.cpp_info.libs += ["%s%s" % (lib, suffix)]
