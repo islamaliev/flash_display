@@ -20,7 +20,7 @@ void DisplayObjectContainer::addChildAt(DisplayObject* child, unsigned index) {
     DisplayObjectContainer* parent = child->getParent();
     if (parent) {
         if (parent == this) {
-            _moveChildTo(child, index);
+            _moveChildTo(child, index >= m_children.size() ? m_children.size() - 1 : index);
             return;
         }
         // TODO: optimize so that when child is moved depth and tree size are calculated only once
@@ -73,14 +73,14 @@ DisplayObject* DisplayObjectContainer::_removeChildAt(std::vector<DisplayObject*
 }
 
 void DisplayObjectContainer::_moveChildTo(DisplayObject* child, unsigned index) {
-    const auto& newIndex = m_children.begin() + index;
-    if (child == *newIndex || (index > 0 && child == *(newIndex - 1))) {
+	const auto& newIndex = m_children.begin() + index;
+	const auto& currentIndex = std::find(m_children.begin(), m_children.end(), child);
+	if (currentIndex == newIndex)
         return;
-    }
-    const auto& currentIndex = std::find(m_children.begin(), m_children.end(), child);
+
     bool moveLeft = currentIndex >= newIndex;
     const auto& firstIt = moveLeft ? newIndex : currentIndex;
-    const auto& lastIt = !moveLeft ? newIndex : currentIndex + 1;
+	const auto& lastIt = moveLeft ? currentIndex + 1 : newIndex + 1;
     const auto& newFirstIt = moveLeft ? currentIndex : currentIndex + 1;
     std::rotate(firstIt, newFirstIt, lastIt);
 }
