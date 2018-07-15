@@ -14,8 +14,8 @@ void Image::preRender(flash::render::RenderState& renderState) {
 void Image::setTexture(Texture* texture) {
     m_texture = texture;
     _setTextureId(m_texture->getId());
-    setActualWidth(static_cast<float>(texture->width()));
-    setActualHeight(static_cast<float>(texture->height()));
+	setActualWidth(static_cast<float>(texture->width()));
+	setActualHeight(static_cast<float>(texture->height()));
 }
 
 void Image::setWidth(float value) {

@@ -13,7 +13,7 @@ namespace display {
     class Texture {
     public:
         // TODO: move it to some kind of texture manager
-        static int s_numTextures;
+		static int s_numTextures;
 
         Texture(int width, int height);
 

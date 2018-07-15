@@ -14,9 +14,9 @@ namespace render {
     struct BufferData {
         math::Mat4* matrices;
         int* textures;
-        int* batchSizes;
-        int numDraws;
-    };
+		int* batchSizes;
+		int numDraws;
+	};
 
     class Context {
     public:

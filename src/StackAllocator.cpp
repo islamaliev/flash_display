@@ -18,8 +18,8 @@ StackAllocator::~StackAllocator() {
 void* StackAllocator::alloc(size_t size) {
     assert(m_top + size <= m_size);
     char* p = m_base + m_top;
-    m_top += static_cast<Marker>(size);
-    return p;
+	m_top += static_cast<Marker>(size);
+	return p;
 }
 
 const Marker StackAllocator::getMarker() const {

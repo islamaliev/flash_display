@@ -13,7 +13,10 @@ namespace display {
         void start();
 
         void stop();
+        
+        void clear();
 
+    private:
         void init();
     };
 

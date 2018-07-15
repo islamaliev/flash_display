@@ -1,12 +1,13 @@
 #include "Context.h"
-#include "GL/glew.h"
-#include <GLFW/glfw3.h>
+#include <OpenGL/OpenGL.h>
+#include <OpenGL/gl3.h>
 #include <cassert>
 #include "RenderBufferOrganizer.h"
 #include "Program.h"
 #include "DisplayObject.h"
 #include "StackAllocator.h"
 #include "RenderState.h"
+#include "Application.h"
 
 using Mat4 = flash::math::Mat4;
 using StackAllocator = flash::allocator::StackAllocator;
@@ -15,14 +16,15 @@ using DisplayObject = flash::display::DisplayObject;
 
 using namespace flash;
 using namespace render;
+using namespace ui;
 
 int Context::s_batchBitsNum = 0;
-// this default value are for offset renderer
+// this default value is for offset renderer
 int Context::s_maxTextureUnits = 8;
 
 namespace {
     Program program;
-    GLFWwindow* window;
+    display::DisplayObject* _stage;
 
     StackAllocator _frameAllocator = StackAllocator(4000000);
 
@@ -41,18 +43,11 @@ namespace {
     };
 
     void _init() {
-#ifndef OFFSCREEN
-//        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &Context::s_maxTextureUnits);
-#endif
         Context::s_batchBitsNum = 0;
         auto i = Context::s_maxTextureUnits;
         while (i >>= 1)
             ++Context::s_batchBitsNum;
 //        printf("GL_MAX_TEXTURE_IMAGE_UNITS = %d\n", Context::s_maxTextureUnits);
-    }
-
-    void _clear() {
-        _frameAllocator.clear();
     }
 
     void _initVAO() {
@@ -97,8 +92,8 @@ namespace {
             glBufferSubData(GL_ARRAY_BUFFER, pointsSize,                texturesSize, bufData.textures + batchOffset);
             glBufferSubData(GL_ARRAY_BUFFER, pointsSize + texturesSize, matricesSize, bufData.matrices + batchOffset);
 
-            int matRowSize = static_cast<int>(4 * sizeof(float));
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+			int matRowSize = static_cast<int>(4 * sizeof(float));
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
             glVertexAttribIPointer(1, 1, GL_INT, 0, (void*) pointsSize);
             auto matPoint = pointsSize + texturesSize;
             glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 4 * matRowSize, (void*) (matPoint + 0 * matRowSize));
@@ -123,201 +118,111 @@ namespace {
             batchOffset += batchSize;
         }
     }
+    
+    void _onAppInit();
 }
 
-#ifdef OFFSCREEN
-#include <assert.h>
-#include <png.h>
-#include <jpeglib.h>
-
-extern const char* nextOffscreen();
+#ifndef OFFSCREEN
+namespace {
+    
+    bool _sync = false;
+    
+    void _onAppVSync() {
+        _sync = true;
+    }
+    
+    class RenderMediator {
+    public:
+        void appInit() {
+//          const GLubyte* renderer = glGetString(GL_RENDERER);
+//          const GLubyte* version = glGetString(GL_VERSION);
+//          printf("Renderer: %s\n", renderer);
+//          printf("OpenGL version supported %s\n", version);
+            glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &Context::s_maxTextureUnits);
+            glReadBuffer(GL_BACK);
+        }
+        
+        void initWindow(unsigned width, unsigned height) {
+            Application::instance().run(&_onAppInit, &_onAppVSync);
+        }
+        
+        bool preRender() {
+            return _sync;
+        }
+        
+        void postRender() {
+            Application::instance().swap();
+            _sync = false;
+        }
+        
+        void dispose() {
+        }
+    };
+}
+#else
+#include "OffscreenRenderering.h"
+#endif
 
 namespace {
-
-    GLuint fbo = 0;
-    GLuint rbo_depth = 0;
-    GLuint renderTexture = 0;
-
-    unsigned w;
-    unsigned h;
-
-    enum Constants { SCREENSHOT_MAX_FILENAME = 256 };
-
-    void prepareOffscreenBuffer() {
-        glGenTextures(1, &renderTexture);
-        glBindTexture(GL_TEXTURE_2D, renderTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-        glGenFramebuffers(1, &fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderTexture, 0);
-
-        glGenRenderbuffers(1, &rbo_depth);
-        glBindRenderbuffer(GL_RENDERBUFFER, rbo_depth);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, w, h);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo_depth);
-
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderTexture, 0);
-
-        assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-
-        int glget;
-        glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &glget);
-        assert(w * h < (unsigned int) glget);
-    }
-
-    void savePNG(const char *filename) {
-        size_t i, nvals;
-        const size_t format_nchannels = 3;
-        nvals = format_nchannels * w * h;
-		FILE* fileStream;
-		errno_t err = fopen_s(&fileStream, filename, "wb");
-
-        if (err != 0) {
-            printf("Error opening output png file %s\n", filename );
-            return;
-        }
-
-        GLubyte* pixels = (GLubyte*) malloc(nvals * sizeof(GLubyte));
-        png_byte* png_bytes = (png_byte*) malloc(nvals * sizeof(png_byte));
-        png_byte** png_rows = (png_byte**) malloc(h * sizeof(png_byte*));
-        glBindTexture(GL_TEXTURE_2D, renderTexture);
-        glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-        for (i = 0; i < nvals; i++)
-            (png_bytes)[i] = (pixels)[i];
-        for (i = 0; i < h; i++)
-            (png_rows)[h - i - 1] = &(png_bytes)[i * w * format_nchannels];
-        png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-        if (!png) abort();
-        png_infop info = png_create_info_struct(png);
-        if (!info) abort();
-        if (setjmp(png_jmpbuf(png))) abort();
-        png_init_io(png, fileStream);
-        png_set_IHDR(
-                png,
-                info,
-                w,
-                h,
-                8,
-                PNG_COLOR_TYPE_RGB,
-                PNG_INTERLACE_NONE,
-                PNG_COMPRESSION_TYPE_DEFAULT,
-                PNG_FILTER_TYPE_DEFAULT
-        );
-        png_write_info(png, info);
-        png_write_image(png, png_rows);
-        png_write_end(png, NULL);
-        free(pixels);
-        free(png_bytes);
-        free(png_rows);
-        fclose(fileStream);
-    }
-
-    void saveOffscreen(const char* name) {
-        glFlush();
-        char filename[SCREENSHOT_MAX_FILENAME];
-        strcpy_s(filename, SCREENSHOT_MAX_FILENAME, name);
-        strcat_s(filename, SCREENSHOT_MAX_FILENAME, ".png");
-        savePNG(filename);
+    RenderMediator _renderMediator;
+    
+    void _onAppInit() {
+        _renderMediator.appInit();
+        
+        _init();
+        _initVAO();
+        
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+        
+        program.init();
+        program.activate(nullptr);
+        
+        std::vector<int> samplers((unsigned long) Context::s_maxTextureUnits);
+        for (int i = 0; i < Context::s_maxTextureUnits; ++i)
+            samplers[i] = i;
+        program.setUniform("u_textures", samplers.data(), Context::s_maxTextureUnits);
     }
 }
-#endif
 
 void Context::init(int width, int height) {
-    if (!glfwInit()) {
-        fprintf(stderr, "ERROR: could not start GLFW3\n");
-    }
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    window = glfwCreateWindow(width, height, "OpenGL", NULL, NULL);
-    if (!window) {
-        fprintf(stderr, "ERROR: could not open window with GLFW3\n");
-        glfwTerminate();
-    }
-    glfwMakeContextCurrent(window);
-
-    glewExperimental = GL_TRUE;
-    GLenum status = glewInit();
-    assert(status == GLEW_OK);
-
-#ifdef OFFSCREEN
-    w = width;
-    h = height;
-    glfwHideWindow(window);
-    prepareOffscreenBuffer();
-    glClearColor(0.2f, 0.2f, 0.2f, 1);
-    glClearDepth(1.0f);
-#else
-//    const GLubyte* renderer = glGetString(GL_RENDERER);
-//    const GLubyte* version = glGetString(GL_VERSION);
-//    printf("Renderer: %s\n", renderer);
-//    printf("OpenGL version supported %s\n", version);
-    glReadBuffer(GL_BACK);
-#endif
-
-    _init();
-    _initVAO();
-
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-
-    program.init();
-    program.activate(nullptr);
-
-    std::vector<int> samplers((unsigned long) s_maxTextureUnits);
-    for (int i = 0; i < s_maxTextureUnits; ++i)
-        samplers[i] = i;
-    program.setUniform("u_textures", samplers.data(), s_maxTextureUnits);
+    _renderMediator.initWindow(width, height);
 }
 
 void Context::start(DisplayObject& stage) {
-    while (!glfwWindowShouldClose(window)) {
+    _stage = &stage;
+    Application& app = Application::instance();
+    
+    while (app.isRunning()) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-#ifdef OFFSCREEN
-        glViewport(0, 0, w, h);
-        const char* name = nextOffscreen();
-        if (strlen(name) == 0) {
+        if (!_renderMediator.preRender())
             continue;
-        }
-#endif
-
-        _clear();
+        
+        _frameAllocator.clear();
 
         RenderState renderState;
-        stage.preRender(renderState);
+        _stage->preRender(renderState);
 
         BufferData bufData;
-        RenderBufferOrganizer::organize(stage, _frameAllocator, bufData);
+        RenderBufferOrganizer::organize(*_stage, _frameAllocator, bufData);
 
         _draw(bufData);
 
-        glfwPollEvents();
-
-#ifdef OFFSCREEN
-        saveOffscreen(name);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-#else
-        glfwSwapBuffers(window);
-#endif
+        _renderMediator.postRender();
     }
+    
     dispose();
 }
 
 void Context::stop() {
-    glfwSetWindowShouldClose(window, GL_TRUE);
+    Application::instance().stop();
 }
 
 void Context::dispose() {
     glDeleteVertexArrays(1, &_vao);
     program.dispose();
-    glfwTerminate();
+    _renderMediator.dispose();
 }
 
 void Context::setProjection(const flash::math::Mat4& matrix) {

@@ -20,8 +20,8 @@ namespace display {
         std::size_t numChildren() const { return m_children.size(); }
 
         void addChild(DisplayObject* child) {
-            addChildAt(child, static_cast<unsigned>(m_children.size()));
-        }
+			addChildAt(child, static_cast<unsigned>(m_children.size()));
+		}
 
         void addChildAt(DisplayObject* child, unsigned index);
 
@@ -42,6 +42,8 @@ namespace display {
         }
 
         void removeChildren();
+        
+        void destroy() override;
 
         std::size_t getChildIndex(DisplayObject* child) const {
             const auto& beg = m_children.cbegin();

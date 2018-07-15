@@ -55,6 +55,8 @@ namespace flash {
         int& getOrderComponent(Entity);
 
         void sort();
+        
+        void clear();
 
     private:
         int m_nextIndex{1};

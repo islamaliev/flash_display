@@ -16,10 +16,10 @@ namespace {
 }
 
 Stage::Stage(unsigned width, unsigned height) {
-    _setWidth(static_cast<float>(width));
-    _setHeight(static_cast<float>(height));
-    _setDepth(0);
-    init();
+	_setWidth(static_cast<float>(width));
+	_setHeight(static_cast<float>(height));
+	_setDepth(0);
+	init();
 }
 
 void Stage::start() {
@@ -44,4 +44,13 @@ void Stage::init() {
         // TODO: max depth (far) should be configurable of calculated in more sophisticated way
         s_context->setProjection(Mat4::orthographicProjection(0, width(), 0, height(), -1, 1000));
     }
+}
+
+void Stage::clear() {
+    _alterTreeSizeBy(1 - treeSize());
+    for (auto child : m_children) {
+        child->_setParent(nullptr);
+        child->destroy();
+    }
+    m_children.clear();
 }

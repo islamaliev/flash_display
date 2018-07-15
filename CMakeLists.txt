@@ -10,6 +10,7 @@ find_package(OpenGL REQUIRED)
 
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(SOURCES
+    "${SOURCE_DIR}/Application.h"
     "${SOURCE_DIR}/Color.h"
     "${SOURCE_DIR}/ComponentContainer.cpp"
     "${SOURCE_DIR}/ComponentContainer.h"
@@ -23,6 +24,7 @@ set(SOURCES
     "${SOURCE_DIR}/FileLoader.h"
     "${SOURCE_DIR}/Image.cpp"
     "${SOURCE_DIR}/Image.h"
+    "${SOURCE_DIR}/OffscreenRendering.h"
     "${SOURCE_DIR}/Program.cpp"
     "${SOURCE_DIR}/Program.h"
     "${SOURCE_DIR}/Rectangle.h"

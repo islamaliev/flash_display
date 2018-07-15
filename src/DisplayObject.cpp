@@ -34,11 +34,11 @@ void DisplayObject::preRender(flash::render::RenderState& renderState) {
 }
 
 Mat4 DisplayObject::_getTransform(const flash::SpatialComponent& spatial, int z) {
-    Mat4 m;
+	Mat4 m;
     float xt = spatial.x - spatial.pivotX * spatial.scaleX;
     float yt = spatial.y - spatial.pivotY * spatial.scaleY;
-    m.translate(xt, yt, static_cast<float>(z));
-    m.scale(spatial.width, spatial.height, 1);
+	m.translate(xt, yt, static_cast<float>(z));
+	m.scale(spatial.width, spatial.height, 1);
     return m;
 }
 
@@ -106,6 +106,10 @@ void DisplayObject::_alterTreeSizeBy(int value) {
     _setTreeSize(treeSize() + value);
     if (m_parent)
         m_parent->_alterTreeSizeBy(value);
+}
+
+void DisplayObject::destroy() {
+    delete this;
 }
 
 flash::ComponentContainer& DisplayObject::_getComponents() {
