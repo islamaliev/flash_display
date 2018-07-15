@@ -1,10 +1,9 @@
-#import <OpenGL/OpenGL.h>
-#import <OpenGL/gl3.h>
-#include <cstdio>
 #include "Program.h"
 #include "Context.h"
+#include "Mat4.h"
+#include <GL/glew.h>
+#include <cstdio>
 #include <string>
-#include <Mat4.h>
 
 namespace {
     GLuint vertShader;

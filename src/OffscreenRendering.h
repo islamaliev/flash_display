@@ -1,4 +1,8 @@
 #include <png.h>
+#include <GL/glew.h>
+#include <cstdlib>
+#include <cstring>
+#include <cassert>
 
 extern const char* nextOffscreen();
 

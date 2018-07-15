@@ -10,6 +10,7 @@ find_package(OpenGL REQUIRED)
 
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(SOURCES
+    "${SOURCE_DIR}/Application.cpp"
     "${SOURCE_DIR}/Application.h"
     "${SOURCE_DIR}/Color.h"
     "${SOURCE_DIR}/ComponentContainer.cpp"
@@ -41,13 +42,12 @@ set(SOURCES
 
 set(CMAKE_DEBUG_POSTFIX d)
 
-set(ALL_LIBS ${OPENGL_LIBRARIES} CONAN_PKG::flash_math CONAN_PKG::glew CONAN_PKG::glfw CONAN_PKG::libpng 
-    CONAN_PKG::libjpeg)
+set(ALL_LIBS ${OPENGL_LIBRARIES} CONAN_PKG::flash_math CONAN_PKG::glew CONAN_PKG::glfw CONAN_PKG::libpng CONAN_PKG::libjpeg)
 
 add_library(${PROJECT_NAME} ${SOURCES})
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(${PROJECT_NAME} ${ALL_LIBS})
-target_include_directories(${PROJECT_NAME} PUBLIC ${SOURCE_DIR} ${OPENGL_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PUBLIC ${SOURCE_DIR} ${OPENGL_INCLUDE_DIR})
 
 #set(OFFSCREEN_TARGET_NAME ${PROJECT_NAME}_offscreen)
 #add_library(${OFFSCREEN_TARGET_NAME} ${SOURCES})

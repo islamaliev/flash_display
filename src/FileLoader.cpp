@@ -1,11 +1,9 @@
 #include "FileLoader.h"
-#include <istream>
-#include <fstream>
-
-#include <jpeglib.h>
 #include "Color.h"
 #include "Texture.h"
-
+#include <istream>
+#include <fstream>
+#include <jpeglib.h>
 
 using namespace flash::filesystem;
 using namespace std;

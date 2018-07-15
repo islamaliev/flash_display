@@ -1,5 +1,5 @@
-#include <assert.h>
 #include "ComponentContainer.h"
+#include <assert.h>
 
 using namespace flash;
 

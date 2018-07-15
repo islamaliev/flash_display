@@ -1,23 +1,27 @@
 #pragma once
 
-namespace flash {
+namespace flash 
+{
     
-namespace ui {
+namespace ui 
+{
     
-    class Application {
+    class Application 
+	{
     public:
-        static Application& instance() {
+        static Application& instance() 
+		{
             static Application app;
             return app;
         }
         
-        int run(void(*initF)(void), void(*updateF)(void));
+		void init(int width, int height, void(*onInitDone)(void));
+
+        int run(void(*updateF)(void));
         
         bool isRunning() const;
         
         void stop();
-        
-        void swap();
         
         void* m_data{nullptr};
         

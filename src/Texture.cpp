@@ -1,7 +1,6 @@
-#import <OpenGL/OpenGL.h>
-#import <OpenGL/gl3.h>
 #include "Texture.h"
 #include "Color.h"
+#include <GL/glew.h>
 
 using namespace flash::display;
 

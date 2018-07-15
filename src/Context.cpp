@@ -1,13 +1,12 @@
 #include "Context.h"
-#include <OpenGL/OpenGL.h>
-#include <OpenGL/gl3.h>
-#include <cassert>
 #include "RenderBufferOrganizer.h"
 #include "Program.h"
 #include "DisplayObject.h"
 #include "StackAllocator.h"
 #include "RenderState.h"
 #include "Application.h"
+#include <GL/glew.h>
+#include <cassert>
 
 using Mat4 = flash::math::Mat4;
 using StackAllocator = flash::allocator::StackAllocator;
@@ -22,7 +21,8 @@ int Context::s_batchBitsNum = 0;
 // this default value is for offset renderer
 int Context::s_maxTextureUnits = 8;
 
-namespace {
+namespace 
+{
     Program program;
     display::DisplayObject* _stage;
 
@@ -30,19 +30,22 @@ namespace {
 
     GLuint _vao = 0;
 
-    float _points[] = {
+    float _points[] = 
+	{
             0.0f, 1.0f, 0.0f,
             1.0f, 1.0f, 0.0f,
             1.0f, 0.0f, 0.0f,
             0.0f, 0.0f, 0.0f
     };
 
-    GLuint _indecies[] = {
+    GLuint _indecies[] = 
+	{
             0, 1, 2,
             3, 0, 2
     };
 
-    void _init() {
+    void _init() 
+	{
         Context::s_batchBitsNum = 0;
         auto i = Context::s_maxTextureUnits;
         while (i >>= 1)
@@ -50,7 +53,8 @@ namespace {
 //        printf("GL_MAX_TEXTURE_IMAGE_UNITS = %d\n", Context::s_maxTextureUnits);
     }
 
-    void _initVAO() {
+    void _initVAO() 
+	{
         glGenVertexArrays(1, &_vao);
         glBindVertexArray(_vao);
 
@@ -60,16 +64,20 @@ namespace {
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(_indecies), _indecies, GL_STATIC_DRAW);
     }
 
-    void _draw(BufferData& bufData) {
+    void _draw(BufferData& bufData) 
+	{
         auto batchOffset = 0;
-        for (auto drawIndex = 0; drawIndex < bufData.numDraws; ++drawIndex) {
+        for (auto drawIndex = 0; drawIndex < bufData.numDraws; ++drawIndex) 
+		{
             auto batchSize = bufData.batchSizes[drawIndex];
             glBindVertexArray(_vao);
             {
                 int units = Context::s_maxTextureUnits;
                 auto offset = drawIndex * units;
-                for (int i = 0; i < Context::s_maxTextureUnits; ++i) {
-                    if (i + offset) {
+                for (int i = 0; i < Context::s_maxTextureUnits; ++i) 
+				{
+                    if (i + offset) 
+					{
                         glActiveTexture(GL_TEXTURE0 + i);
                         glBindTexture(GL_TEXTURE_2D, i + offset);
                     }
@@ -119,55 +127,53 @@ namespace {
         }
     }
     
-    void _onAppInit();
+    void _onWindowInitDone();
 }
 
 #ifndef OFFSCREEN
-namespace {
-    
-    bool _sync = false;
-    
-    void _onAppVSync() {
-        _sync = true;
+namespace 
+{
+    void _onWindowDisplayUpdate() 
+	{
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		_frameAllocator.clear();
+
+		RenderState renderState;
+		_stage->preRender(renderState);
+
+		BufferData bufData;
+		RenderBufferOrganizer::organize(*_stage, _frameAllocator, bufData);
+
+		_draw(bufData);
     }
     
-    class RenderMediator {
-    public:
-        void appInit() {
-//          const GLubyte* renderer = glGetString(GL_RENDERER);
-//          const GLubyte* version = glGetString(GL_VERSION);
-//          printf("Renderer: %s\n", renderer);
-//          printf("OpenGL version supported %s\n", version);
-            glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &Context::s_maxTextureUnits);
-            glReadBuffer(GL_BACK);
-        }
-        
-        void initWindow(unsigned width, unsigned height) {
-            Application::instance().run(&_onAppInit, &_onAppVSync);
-        }
-        
-        bool preRender() {
-            return _sync;
-        }
-        
-        void postRender() {
-            Application::instance().swap();
-            _sync = false;
-        }
-        
-        void dispose() {
-        }
+	class RenderMediator
+	{
+	public:
+		void initWindow(int width, int height)
+		{
+			Application::instance().init(width, height, &_onWindowInitDone);
+		}
+
+		void startWindow()
+		{
+			Application::instance().run(&_onWindowDisplayUpdate);
+		}
     };
 }
 #else
 #include "OffscreenRenderering.h"
 #endif
 
-namespace {
+namespace 
+{
     RenderMediator _renderMediator;
     
-    void _onAppInit() {
-        _renderMediator.appInit();
+    void _onWindowInitDone() 
+	{
+		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &Context::s_maxTextureUnits);
+		glReadBuffer(GL_BACK);
         
         _init();
         _initVAO();
@@ -181,50 +187,37 @@ namespace {
         std::vector<int> samplers((unsigned long) Context::s_maxTextureUnits);
         for (int i = 0; i < Context::s_maxTextureUnits; ++i)
             samplers[i] = i;
+
         program.setUniform("u_textures", samplers.data(), Context::s_maxTextureUnits);
     }
 }
 
-void Context::init(int width, int height) {
+void Context::init(int width, int height) 
+{
     _renderMediator.initWindow(width, height);
 }
 
-void Context::start(DisplayObject& stage) {
+void Context::start(DisplayObject& stage) 
+{
     _stage = &stage;
-    Application& app = Application::instance();
     
-    while (app.isRunning()) {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        if (!_renderMediator.preRender())
-            continue;
-        
-        _frameAllocator.clear();
-
-        RenderState renderState;
-        _stage->preRender(renderState);
-
-        BufferData bufData;
-        RenderBufferOrganizer::organize(*_stage, _frameAllocator, bufData);
-
-        _draw(bufData);
-
-        _renderMediator.postRender();
-    }
+	_renderMediator.startWindow();
     
     dispose();
 }
 
-void Context::stop() {
+void Context::stop() 
+{
     Application::instance().stop();
 }
 
-void Context::dispose() {
+void Context::dispose() 
+{
     glDeleteVertexArrays(1, &_vao);
     program.dispose();
-    _renderMediator.dispose();
 }
 
-void Context::setProjection(const flash::math::Mat4& matrix) {
+void Context::setProjection(const flash::math::Mat4& matrix) 
+{
     program.setUniform("u_projection", matrix);
 }
